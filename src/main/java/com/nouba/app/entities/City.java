@@ -3,21 +3,14 @@ package com.nouba.app.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
-
 @Entity
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Ville {
+public class City {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private String nom;
-    private String codePostal;
-
-    @OneToMany(mappedBy = "ville", cascade = CascadeType.ALL)
-    private List<Agence> agences;
+    private String name;
 }

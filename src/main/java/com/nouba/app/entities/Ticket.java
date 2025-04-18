@@ -6,27 +6,28 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ticket")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Ticket {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String numéro;
-    private String état; // "en attente", "annulé", "terminé"
-    private LocalDateTime heureRéservée;
-    private String typeService;
-    private LocalDateTime date;
+    private Integer number; // Position in the queue
+
+    private Boolean served = false;
+
+    private LocalDateTime issuedAt;
+
+    private LocalDateTime servedAt;
 
     @ManyToOne
-    @JoinColumn(name = "utilisateur_id")
-    private Utilisateur utilisateur;
+    private Client client;
 
     @ManyToOne
-    @JoinColumn(name = "agence_id")
-    private Agence agence;
+    private Agency agency;
+
+
 }
