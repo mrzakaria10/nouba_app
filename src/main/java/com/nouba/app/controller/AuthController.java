@@ -44,17 +44,26 @@ public class AuthController {
     }
 
     // Méthode pour inscrire un nouvel utilisateur.
+<<<<<<< HEAD
     @PostMapping("/register-client") // Cette annotation définit une route HTTP POST pour l'enregistrement d'un nouvel utilisateur.
+=======
+    @PostMapping("/register") // Cette annotation définit une route HTTP POST pour l'enregistrement d'un nouvel utilisateur.
+>>>>>>> origin/master
     public ResponseEntity<ApiResponse<String>> register(@Valid @RequestBody ClientRegisterRequest request) throws Exception {
         // La méthode prend un `RegisterRequest` qui contient les informations nécessaires pour inscrire un nouvel utilisateur.
         // @Valid s'assure que les données de la requête sont validées avant de procéder à l'enregistrement.
 
         // Appel du service d'authentification pour inscrire l'utilisateur en base de données.
+<<<<<<< HEAD
         ApiResponse<String> response = authService.registerClient(request);
+=======
+        ApiResponse<String> response = authService.register(request);
+>>>>>>> origin/master
 
         // Retourner une réponse JSON avec un message de succès d'enregistrement.
         return ResponseEntity.ok(response);  // Code HTTP 200, avec la réponse d'inscription.
     }
+<<<<<<< HEAD
     @PostMapping("/register-agency") // Cette annotation définit une route HTTP POST pour l'enregistrement d'un nouvel utilisateur.
     public ResponseEntity<ApiResponse<String>> register(@Valid @RequestBody AgencyRegisterRequest request) throws Exception {
         // La méthode prend un `RegisterRequest` qui contient les informations nécessaires pour inscrire un nouvel utilisateur.
@@ -67,6 +76,8 @@ public class AuthController {
         return ResponseEntity.ok(response);  // Code HTTP 200, avec la réponse d'inscription.
     }
 
+=======
+>>>>>>> origin/master
 
     // Méthode pour activer un compte utilisateur via un token envoyé par e-mail.
     @GetMapping("/activate") // Cette annotation définit une route HTTP GET pour activer le compte de l'utilisateur via un token.

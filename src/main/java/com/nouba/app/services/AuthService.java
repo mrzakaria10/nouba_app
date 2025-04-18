@@ -1,6 +1,7 @@
 package com.nouba.app.services;
 
 
+<<<<<<< HEAD
 import com.nouba.app.dto.AgencyRegisterRequest;
 import com.nouba.app.dto.ApiResponse;
 import com.nouba.app.dto.ClientRegisterRequest;
@@ -14,6 +15,16 @@ import com.nouba.app.exceptions.auth.*;
 import com.nouba.app.exceptions.email.SendingEmailException;
 import com.nouba.app.repositories.AgencyRepository;
 import com.nouba.app.repositories.CityRepository;
+=======
+import com.nouba.app.dto.ApiResponse;
+import com.nouba.app.dto.ClientRegisterRequest;
+import com.nouba.app.dto.LoginRequest;
+import com.nouba.app.entities.Client;
+import com.nouba.app.entities.Role;
+import com.nouba.app.entities.User;
+import com.nouba.app.exceptions.auth.*;
+import com.nouba.app.exceptions.email.SendingEmailException;
+>>>>>>> origin/master
 import com.nouba.app.repositories.ClientRepository;
 import com.nouba.app.repositories.UserRepository;
 import com.nouba.app.security.JwtUtils;
@@ -41,12 +52,15 @@ public class AuthService {
     private ClientRepository clientRepository;
 
     @Autowired
+<<<<<<< HEAD
     private AgencyRepository agencyRepository;
 
     @Autowired
     private CityRepository cityRepository;
 
     @Autowired
+=======
+>>>>>>> origin/master
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -59,7 +73,11 @@ public class AuthService {
     private JwtUtils jwtUtils;
 
     @Transactional
+<<<<<<< HEAD
     public ApiResponse<String> registerClient(ClientRegisterRequest request) throws Exception {
+=======
+    public ApiResponse<String> register(ClientRegisterRequest request) throws Exception {
+>>>>>>> origin/master
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new UserAlreadyExistsException("Un utilisateur avec cet email existe déjà.");
@@ -96,6 +114,7 @@ public class AuthService {
         return new ApiResponse<>("User registered successfully! Please check your email to activate your account.", HttpStatus.OK.value());
     }
 
+<<<<<<< HEAD
     // --------------------------------------------------
     @Transactional
     public ApiResponse<String> registerAgency(AgencyRegisterRequest request) throws Exception {
@@ -137,6 +156,8 @@ public class AuthService {
         return new ApiResponse<>("User registered successfully! Please check your email to activate your account.", HttpStatus.OK.value());
     }
     //------------------------------------------------
+=======
+>>>>>>> origin/master
 
     public String login(LoginRequest loginRequest) {
         // Authenticate the user
