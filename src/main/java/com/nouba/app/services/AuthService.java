@@ -1,7 +1,7 @@
 package com.nouba.app.services;
 
 
-<<<<<<< HEAD
+
 import com.nouba.app.dto.AgencyRegisterRequest;
 import com.nouba.app.dto.ApiResponse;
 import com.nouba.app.dto.ClientRegisterRequest;
@@ -13,18 +13,6 @@ import com.nouba.app.entities.User;
 import com.nouba.app.entities.City;
 import com.nouba.app.exceptions.auth.*;
 import com.nouba.app.exceptions.email.SendingEmailException;
-import com.nouba.app.repositories.AgencyRepository;
-import com.nouba.app.repositories.CityRepository;
-=======
-import com.nouba.app.dto.ApiResponse;
-import com.nouba.app.dto.ClientRegisterRequest;
-import com.nouba.app.dto.LoginRequest;
-import com.nouba.app.entities.Client;
-import com.nouba.app.entities.Role;
-import com.nouba.app.entities.User;
-import com.nouba.app.exceptions.auth.*;
-import com.nouba.app.exceptions.email.SendingEmailException;
->>>>>>> origin/master
 import com.nouba.app.repositories.ClientRepository;
 import com.nouba.app.repositories.UserRepository;
 import com.nouba.app.security.JwtUtils;
@@ -52,15 +40,6 @@ public class AuthService {
     private ClientRepository clientRepository;
 
     @Autowired
-<<<<<<< HEAD
-    private AgencyRepository agencyRepository;
-
-    @Autowired
-    private CityRepository cityRepository;
-
-    @Autowired
-=======
->>>>>>> origin/master
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -73,11 +52,7 @@ public class AuthService {
     private JwtUtils jwtUtils;
 
     @Transactional
-<<<<<<< HEAD
-    public ApiResponse<String> registerClient(ClientRegisterRequest request) throws Exception {
-=======
     public ApiResponse<String> register(ClientRegisterRequest request) throws Exception {
->>>>>>> origin/master
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new UserAlreadyExistsException("Un utilisateur avec cet email existe déjà.");
@@ -114,50 +89,6 @@ public class AuthService {
         return new ApiResponse<>("User registered successfully! Please check your email to activate your account.", HttpStatus.OK.value());
     }
 
-<<<<<<< HEAD
-    // --------------------------------------------------
-    @Transactional
-    public ApiResponse<String> registerAgency(AgencyRegisterRequest request) throws Exception {
-
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new UserAlreadyExistsException("Un utilisateur avec cet email existe déjà.");
-        }
-
-        User user = new User();
-        user.setEmail(request.getEmail());
-        user.setName(request.getName());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setEnabled(false);
-        user.setActivationToken(UUID.randomUUID().toString());
-        user.setRole(Role.Agency);
-        User SavedUser = userRepository.save(user);
-
-        Agency agency = new Agency();
-        agency.setPhone(request.getPhone());
-        agency.setAddress(request.getAddress());
-        agency.setUser(SavedUser);
-        City city = cityRepository.findById(request.getCityId()).orElseThrow();
-        agency.setCity(city);
-        agencyRepository.save(agency);
-
-        String activationLink = "http://localhost:8080/auth/activate?token=" + user.getActivationToken();
-
-        // Charger et personnaliser le modèle d'email
-        Map<String, String> emailVariables = Map.of("activationLink", activationLink);
-        String emailContent = emailService.loadEmailTemplate("templates/emails/activation-email.html", emailVariables);
-
-        // Envoyer l'email
-        try {
-            emailService.sendEmail(user.getEmail(), "Activation de votre compte", emailContent);
-        } catch (MessagingException e) {
-            throw new SendingEmailException("Erreur lors de l'envoi de l'email d'activation.");
-        }
-
-        return new ApiResponse<>("User registered successfully! Please check your email to activate your account.", HttpStatus.OK.value());
-    }
-    //------------------------------------------------
-=======
->>>>>>> origin/master
 
     public String login(LoginRequest loginRequest) {
         // Authenticate the user

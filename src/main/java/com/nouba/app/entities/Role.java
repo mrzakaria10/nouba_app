@@ -2,9 +2,6 @@ package com.nouba.app.entities;
 
 public enum Role {
     CLIENT,
-<<<<<<< HEAD
-    Agency, ADMIN
-=======
+    AGENCY,
     ADMIN
->>>>>>> origin/master
 }
