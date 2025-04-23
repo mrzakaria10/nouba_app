@@ -1,10 +1,12 @@
-﻿package com.nouba.app.dto;
+package com.nouba.app.dto;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@Builder
 public class AgencyResponseDTO {
     private Long id;
     private String name;

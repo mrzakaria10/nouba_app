@@ -17,7 +17,11 @@ public class ApiResponse<T> {
         this.message = message;
         this.status = status;
     }
+    //
+    public ApiResponse(String agenceCrééeAvecSuccès, int value, AgencyResponseDTO response) {
 
+    }
+    //
     // Getters et Setters
     public T getData() {
         return data;
