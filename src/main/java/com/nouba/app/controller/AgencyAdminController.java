@@ -16,18 +16,15 @@ public class AgencyAdminController {
 
     private final AgencyService agencyService;
 
-    @PostMapping("/city/{cityId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PostMapping
     public ResponseEntity<ApiResponse<AgencyResponseDTO>> addAgency(
-            @RequestBody AgencyCreateDTO agencyDTO,
-            @PathVariable Long cityId) {
-        AgencyResponseDTO response = agencyService.createAgency(agencyDTO, cityId);
+            @RequestBody AgencyCreateDTO agencyDTO) {
+        AgencyResponseDTO response = agencyService.createAgency(agencyDTO, agencyDTO.getCityId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>("Agence créée avec succès", HttpStatus.CREATED.value(), response));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ApiResponse<AgencyResponseDTO>> updateAgency(
             @PathVariable Long id,
             @RequestBody AgencyUpdateDTO updateDTO) {
@@ -38,7 +35,6 @@ public class AgencyAdminController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteAgency(@PathVariable Long id) {
         agencyService.deleteAgency(id);
         return ResponseEntity.ok(

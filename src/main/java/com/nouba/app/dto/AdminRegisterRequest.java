@@ -19,7 +19,5 @@ public class AdminRegisterRequest {
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
-    @NotBlank(message = "Phone is required")
-    @Pattern(regexp = "^[0-9]{10}$", message = "Phone must be 10 digits")
-    private String phone;
+
 }

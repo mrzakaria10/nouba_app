@@ -1,28 +1,30 @@
 package com.nouba.app.dto;
 
-import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
 @Getter
 @Setter
 public class AgencyCreateDTO {
-
-
-
-        @NotBlank
+        @NotBlank(message = "Name is required")
         private String name;
-        @NotBlank
+
+        @NotBlank(message = "Address is required")
         private String address;
-        @NotBlank
+
+        @NotBlank(message = "Phone is required")
+        @Pattern(regexp = "^[0-9]{10}$", message = "Phone must be 10 digits")
         private String phone;
-        @NotBlank
-        @Email
+
+        @NotBlank(message = "Email is required")
+        @Email(message = "Invalid email format")
         private String email;
-        @NotBlank
-        @Size(min = 8)
+
+        @NotBlank(message = "Password is required")
+        @Size(min = 8, message = "Password must be at least 8 characters")
         private String password;
 
+        @NotNull(message = "City ID is required")
+        private Long cityId;
 }
