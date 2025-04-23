@@ -99,10 +99,14 @@
 	</dependencies>
 	<build>
 		<plugins>
-			<!-- Plugin Maven pour Spring Boot -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId> <!-- Plugin pour packager et exécuter l'application Spring Boot via Maven -->
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<jvmArguments>
+						-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005
+					</jvmArguments>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

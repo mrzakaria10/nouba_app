@@ -1,5 +1,6 @@
 package com.nouba.app.controller;
 
+import com.nouba.app.dto.AgencyUpdateDTO;
 import com.nouba.app.dto.ApiResponse;
 import com.nouba.app.entities.Agency;
 import com.nouba.app.services.AgencyService;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin/agencies")
+@RequestMapping("admin/agencies")
 @RequiredArgsConstructor
 public class AgencyController {
 
@@ -24,11 +25,16 @@ public class AgencyController {
     }
 
     @PutMapping("/{id}/city/{cityId}")
-    public ResponseEntity<ApiResponse<String>> updateAgency(@PathVariable Long id,
-                                                            @RequestBody Agency agency,
-                                                            @PathVariable Long cityId) {
-        agencyService.updateAgency(id, agency, cityId);
-        return ResponseEntity.ok(new ApiResponse<>("Agency updated successfully", HttpStatus.OK.value()));
+    public ResponseEntity<ApiResponse<String>> updateAgency(
+            @PathVariable Long id,
+            @RequestBody AgencyUpdateDTO updateDTO,
+            @PathVariable Long cityId) {
+
+        Agency updatedAgency = agencyService.updateAgency(id, updateDTO, cityId);
+        return ResponseEntity.ok(
+                new ApiResponse<>("Agency and user updated successfully",
+                        HttpStatus.OK.value())
+        );
     }
 
     @DeleteMapping("/{id}")
@@ -38,12 +44,14 @@ public class AgencyController {
     }
 
     @GetMapping("/city/{cityId}")
-    public List<Agency> getAgenciesByCity(@PathVariable Long cityId) {
-        return agencyService.getAgenciesByCityId(cityId);
+    public ResponseEntity<List<Agency>> getAgenciesByCity(@PathVariable Long cityId) {
+        List<Agency> agencies = agencyService.getAgenciesByCityId(cityId);
+        return ResponseEntity.ok(agencies);
     }
 
     @GetMapping("/{id}")
-    public Agency getAgency(@PathVariable Long id) {
-        return agencyService.getAgencyById(id);
+    public ResponseEntity<Agency> getAgency(@PathVariable Long id) {
+        Agency agency = agencyService.getAgencyById(id);
+        return ResponseEntity.ok(agency);
     }
 }

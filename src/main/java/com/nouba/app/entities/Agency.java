@@ -16,8 +16,13 @@ public class Agency {
     private String name;
 
     private String address;
+    private String phone;
 
     @ManyToOne
     @JoinColumn(name = "city_id", nullable = false)
     private City city;
+
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    private User user;
 }
