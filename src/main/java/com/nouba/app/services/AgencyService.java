@@ -9,6 +9,7 @@ import com.nouba.app.repositories.AgencyRepository;
 import com.nouba.app.repositories.CityRepository;
 import com.nouba.app.repositories.UserRepository;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -48,7 +49,7 @@ public class AgencyService {
     }
 
     @Transactional
-    public AgencyResponseDTO updateAgency(Long agencyId, AgencyUpdateDTO updateDTO) {
+    public AgencyResponseDTO updateAgency(Long agencyId, AgencyUpdateDTO updateDTO, @NotNull Long cityId) {
         Agency agency = agencyRepository.findById(agencyId)
                 .orElseThrow(() -> new RuntimeException("Agency not found"));
 
@@ -64,9 +65,11 @@ public class AgencyService {
         agency.setAddress(updateDTO.getAddress());
         agency.setPhone(updateDTO.getPhone());
 
+
         // Update user email
         User user = agency.getUser();
         user.setEmail(updateDTO.getEmail());
+        user.setName(updateDTO.getName());
         userRepository.save(user);
 
         agency = agencyRepository.save(agency);
@@ -74,12 +77,13 @@ public class AgencyService {
     }
 
     @Transactional
-    public void deleteAgency(Long id) {
+    public void deleteAgency(Long id, long user_id) {
         Agency agency = agencyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Agence non trouvée"));
         User user = agency.getUser();
+        //userRepository.save(user);
         agencyRepository.delete(agency);
-        userRepository.save(user); // Consider if you really want to delete the user
+         // Consider if you really want to delete the user
     }
 
     public List<AgencyResponseDTO> getAllAgencies() {

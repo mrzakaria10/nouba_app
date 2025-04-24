@@ -28,15 +28,15 @@ public class AgencyAdminController {
     public ResponseEntity<ApiResponse<AgencyResponseDTO>> updateAgency(
             @PathVariable Long id,
             @RequestBody AgencyUpdateDTO updateDTO) {
-        AgencyResponseDTO response = agencyService.updateAgency(id, updateDTO);
+        AgencyResponseDTO response = agencyService.updateAgency(id, updateDTO, updateDTO.getCityId());
         return ResponseEntity.ok(
                 new ApiResponse<>("Agence mise à jour", HttpStatus.OK.value(), response)
         );
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteAgency(@PathVariable Long id) {
-        agencyService.deleteAgency(id);
+    public ResponseEntity<ApiResponse<Void>> deleteAgency(@PathVariable Long id, long user_id) {
+        agencyService.deleteAgency(id, user_id);
         return ResponseEntity.ok(
                 new ApiResponse<>("Agence supprimée", HttpStatus.OK.value(), null)
         );
