@@ -11,6 +11,9 @@ public class AgencyUpdateDTO {
     private String phone;
     private String email;
 
+    public String getUserEmail() {
+    }
+
     // User fields that might need updating
     //private String userEmail;
     //private String userName;
