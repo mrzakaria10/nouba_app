@@ -19,24 +19,32 @@ public class TicketService {
     private final AgencyRepository agencyRepository;
     private final TicketRepository ticketRepository;
 
+
     @Transactional
     public Ticket generateTicket(Long agencyId, Client client) {
+        // Verify agency exists
         Agency agency = agencyRepository.findById(agencyId)
-                .orElseThrow(() -> new RuntimeException("Agence non trouvée"));
+                .orElseThrow(() -> new RuntimeException("Agence non trouvée avec l'ID: " + agencyId));
 
-        // Get last ticket number and increment
+        // Get last ticket number and increment by 1
         Integer lastNumber = ticketRepository.findMaxNumberByAgencyAndUnserved(agencyId)
                 .orElse(0);
 
-        Ticket ticket = new Ticket();
-        ticket.setAgency(agency);
-        ticket.setClient(client);
-        ticket.setNumber(lastNumber + 1);
-        ticket.setIssuedAt(LocalDateTime.now());
-        ticket.setServed(false);
+        try {
+            // Create and save new ticket
+            Ticket ticket = new Ticket();
+            ticket.setAgency(agency);
+            ticket.setClient(client);
+            ticket.setNumber(lastNumber + 1);
+            ticket.setIssuedAt(LocalDateTime.now());
+            ticket.setServed(false);
 
-        return ticketRepository.save(ticket);
+            return ticketRepository.save(ticket);
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur lors de la génération du ticket: " + e.getMessage());
+        }
     }
+
 
     public int getPeopleAhead(Long ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)

@@ -1,47 +1,58 @@
 package com.nouba.app.controller;
 
 import com.nouba.app.dto.ApiResponse;
+import com.nouba.app.dto.TicketResponseDTO;
 import com.nouba.app.entities.*;
 import com.nouba.app.repositories.ClientRepository;
 import com.nouba.app.services.TicketService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/tickets")
+@RequestMapping("/api/tickets") // Changed from /auth/login/tickets
 @RequiredArgsConstructor
 public class TicketController {
 
     private final TicketService ticketService;
     private final ClientRepository clientRepository;
 
-    @PostMapping("/agency/{agencyId}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> takeTicket(
+    @PostMapping("/create/agency/{agencyId}")
+    public ResponseEntity<ApiResponse<TicketResponseDTO>> takeTicket(
             @PathVariable Long agencyId,
             @AuthenticationPrincipal User user) {
 
+        // Find client associated with the authenticated user
         Client client = clientRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("Client non trouvé"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "No client profile found. Please create a client profile first."));
 
+        // Generate the ticket
         Ticket ticket = ticketService.generateTicket(agencyId, client);
-        Map<String, Object> status = ticketService.getTicketStatus(ticket.getId(), user.getId());
+        int peopleAhead = ticketService.getPeopleAhead(ticket.getId());
+        int estimatedWait = ticketService.calculateWaitTime(ticket.getAgency().getId());
+
+        // Create response DTO
+        TicketResponseDTO response = new TicketResponseDTO(ticket, peopleAhead, estimatedWait);
 
         return ResponseEntity.ok(
-                new ApiResponse<>(status, "Ticket créé avec succès", 200));
+                new ApiResponse<>(response, "Ticket created successfully", 200));
     }
 
-    @GetMapping("/{ticketId}/status")
+    @GetMapping("/status/{ticketId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getTicketStatus(
             @PathVariable Long ticketId,
             @AuthenticationPrincipal User user) {
 
         Map<String, Object> status = ticketService.getTicketStatus(ticketId, user.getId());
         return ResponseEntity.ok(
-                new ApiResponse<>(status, "Statut du ticket récupéré", 200));
+                new ApiResponse<>(status, "Ticket status retrieved", 200));
     }
 
     @GetMapping("/{ticketId}/ahead")
@@ -49,14 +60,14 @@ public class TicketController {
             @PathVariable Long ticketId,
             @AuthenticationPrincipal User user) {
 
-        ticketService.getTicketStatus(ticketId, user.getId()); // Vérifie l'accès
+        ticketService.getTicketStatus(ticketId, user.getId()); // Verify access
         int peopleAhead = ticketService.getPeopleAhead(ticketId);
 
         return ResponseEntity.ok(
-                new ApiResponse<>(peopleAhead, "Nombre de personnes devant vous", 200));
+                new ApiResponse<>(peopleAhead, "Number of people ahead", 200));
     }
 
-    @PutMapping("/agency/{agencyId}/serve")
+    @PutMapping("/serve/agency/{agencyId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> serveNextClient(
             @PathVariable Long agencyId) {
 
@@ -67,7 +78,7 @@ public class TicketController {
         response.put("servedAt", servedTicket.getServedAt());
 
         return ResponseEntity.ok(
-                new ApiResponse<>(response, "Client suivant servi avec succès", 200));
+                new ApiResponse<>(response, "Next client served successfully", 200));
     }
 
     @GetMapping("/agency/{agencyId}/current")
@@ -80,9 +91,9 @@ public class TicketController {
                     response.put("ticketNumber", ticket.getNumber());
                     response.put("clientName", ticket.getClient().getUser().getName());
                     return ResponseEntity.ok(
-                            new ApiResponse<>(response, "Ticket en cours de traitement", 200));
+                            new ApiResponse<>(response, "Currently serving ticket", 200));
                 })
                 .orElseGet(() -> ResponseEntity.ok(
-                        new ApiResponse<>("Aucun ticket en attente", 200)));
+                        new ApiResponse<>("No tickets in queue", 200)));
     }
 }

@@ -17,6 +17,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(nullable = false)
     private String name;
     private String email;
     private String password;
@@ -24,5 +25,9 @@ public class User {
     private Role role;
     private boolean enabled = false;
     private String activationToken;
+
+    //add
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Client client; // Bidirectional relationship
 
 }

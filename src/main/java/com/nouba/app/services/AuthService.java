@@ -134,6 +134,7 @@ public class AuthService {
 
         Agency agency = new Agency();
         agency.setPhone(request.getPhone());
+        agency.setName(request.getName());
         agency.setAddress(request.getAddress());
         agency.setUser(SavedUser);
         City city = cityRepository.findById(request.getCityId()).orElseThrow();
