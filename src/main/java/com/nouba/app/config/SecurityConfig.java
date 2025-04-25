@@ -44,9 +44,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers("/api/tickets/create/**").hasRole("ROLE_CLIENT")
-                        .requestMatchers("/api/tickets/serve/**").hasRole("ROLE_ADMIN")
-                        .requestMatchers("/api/tickets/status/**").hasAnyRole("ROLE_CLIENT", "ROLE_ADMIN")
+                        .requestMatchers("/api/tickets/create/**").hasRole("CLIENT")
+                        .requestMatchers("/api/tickets/serve/**").hasRole("ADMIN")
+                        .requestMatchers("/api/tickets/status/**").hasAnyRole("CLIENT", "ADMIN")
                         .anyRequest().authenticated()
 
                 )
