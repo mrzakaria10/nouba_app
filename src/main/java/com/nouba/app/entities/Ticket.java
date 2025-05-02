@@ -1,5 +1,6 @@
 package com.nouba.app.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -28,10 +29,12 @@ public class Ticket {
 
     @ManyToOne(optional = false) // Un ticket doit avoir un client
     @JoinColumn(name = "client_id", nullable = false)
+    @JsonIgnoreProperties("tickets") // Add this
     private Client client; // Client associé à ce ticket
 
     @ManyToOne(optional = false) // Un ticket doit avoir une agence
     @JoinColumn(name = "agency_id", nullable = false)
+    @JsonIgnoreProperties("tickets") // Add this
     private Agency agency; // Agence où le ticket a été émis
 
     // Méthode utilitaire pour vérifier si le ticket est servi

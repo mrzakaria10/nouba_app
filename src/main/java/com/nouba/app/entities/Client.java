@@ -1,10 +1,13 @@
 package com.nouba.app.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.List;
 
 @Entity
 @Table(name = "clients")
@@ -24,6 +27,10 @@ public class Client{
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
+
+    @OneToMany(mappedBy = "client")
+    @JsonIgnore // Add this to break circular reference
+    private List<Ticket> tickets;
 
 }
 

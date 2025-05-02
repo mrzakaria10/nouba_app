@@ -9,6 +9,10 @@ import lombok.Setter;
 public class AgencyCreateDTO {
         @NotBlank(message = "Name is required")
         private String name;
+        /**
+        @NotBlank(message = "Photo URL is required")
+        private String photoUrl; // URL de l'image stockée
+         */
 
         @NotBlank(message = "Address is required")
         private String address;

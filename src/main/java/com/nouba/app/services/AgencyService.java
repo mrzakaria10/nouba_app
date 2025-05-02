@@ -1,17 +1,11 @@
 package com.nouba.app.services;
 
-import com.nouba.app.dto.*;
+import com.nouba.app.dto.AgencyResponseDTO;
 import com.nouba.app.entities.Agency;
-import com.nouba.app.entities.City;
-import com.nouba.app.entities.User;
-import com.nouba.app.entities.Role;
+import com.nouba.app.entities.Ticket;
 import com.nouba.app.repositories.AgencyRepository;
-import com.nouba.app.repositories.CityRepository;
-import com.nouba.app.repositories.UserRepository;
-import jakarta.transaction.Transactional;
-import jakarta.validation.constraints.NotNull;
+import com.nouba.app.repositories.TicketRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,98 +14,71 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class AgencyService {
+
     private final AgencyRepository agencyRepository;
-    private final CityRepository cityRepository;
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final TicketRepository ticketRepository;
 
-    @Transactional
-    public AgencyResponseDTO createAgency(AgencyCreateDTO dto, Long cityId) {
-        City city = cityRepository.findById(cityId)
-                .orElseThrow(() -> new RuntimeException("Ville non trouvée"));
-
-        User user = new User();
-        user.setEmail(dto.getEmail());
-        user.setPassword(passwordEncoder.encode(dto.getPassword()));
-        user.setRole(Role.AGENCY);
-        user.setEnabled(true);
-        user = userRepository.save(user);
-
-        Agency agency = new Agency();
-        agency.setName(dto.getName());
-        agency.setAddress(dto.getAddress());
-        agency.setPhone(dto.getPhone());
-        agency.setCity(city);
-        agency.setUser(user);
-        agency = agencyRepository.save(agency);
-
-        return mapToResponseDTO(agency);
+    /**
+     * Récupère toutes les agences avec leurs informations
+     * @return Liste des DTO d'agences
+     */
+    public List<AgencyResponseDTO> getAllAgencies() {
+        // Charge explicitement les relations nécessaires
+        List<Agency> agencies = agencyRepository.findAllWithRelations();
+        return agencies.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
-    @Transactional
-    public AgencyResponseDTO updateAgency(Long agencyId, AgencyUpdateDTO updateDTO, @NotNull Long cityId) {
-        Agency agency = agencyRepository.findById(agencyId)
-                .orElseThrow(() -> new RuntimeException("Agency not found"));
+    /**
+     * Récupère les agences d'une ville spécifique
+     * @param cityId ID de la ville
+     * @return Liste des DTO d'agences de la ville
+     */
+    public List<AgencyResponseDTO> getAgenciesByCity(Long cityId) {
+        return agencyRepository.findByCityId(cityId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
 
-        // Update city if provided
-        if (updateDTO.getCityId() != null) {
-            City city = cityRepository.findById(updateDTO.getCityId())
-                    .orElseThrow(() -> new RuntimeException("City not found"));
-            agency.setCity(city);
+    /**
+     * Convertit une entité Agency en DTO
+     * @param agency Entité à convertir
+     * @return DTO converti
+     * @throws IllegalStateException si conversion impossible
+     */
+    private AgencyResponseDTO convertToDTO(Agency agency) {
+        if (agency == null) {
+            throw new IllegalStateException("L'agence ne peut pas être null");
         }
 
-        // Update agency fields
-        agency.setName(updateDTO.getName());
-        agency.setAddress(updateDTO.getAddress());
-        agency.setPhone(updateDTO.getPhone());
-
-
-        // Update user email
-        User user = agency.getUser();
-        user.setEmail(updateDTO.getEmail());
-        user.setName(updateDTO.getName());
-        userRepository.save(user);
-
-        agency = agencyRepository.save(agency);
-        return mapToResponseDTO(agency);
-    }
-
-    @Transactional
-    public void deleteAgency(Long id, long user_id) {
-        Agency agency = agencyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Agence non trouvée"));
-        User user = agency.getUser();
-        //userRepository.save(user);
-        agencyRepository.delete(agency);
-         // Consider if you really want to delete the user
-    }
-
-    public List<AgencyResponseDTO> getAllAgencies() {
-        return agencyRepository.findAll().stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    public AgencyResponseDTO getAgencyById(Long id) {
-        Agency agency = agencyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Agency not found"));
-        return mapToResponseDTO(agency);
-    }
-
-    public List<AgencyResponseDTO> getAgenciesByCityId(Long cityId) {
-        return agencyRepository.findByCityId(cityId).stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    private AgencyResponseDTO mapToResponseDTO(Agency agency) {
         return AgencyResponseDTO.builder()
                 .id(agency.getId())
                 .name(agency.getName())
                 .address(agency.getAddress())
                 .phone(agency.getPhone())
-                .cityName(agency.getCity().getName())
-                .email(agency.getUser().getEmail())
+                .cityName(agency.getCity() != null ? agency.getCity().getName() : "Inconnue")
+                .email(agency.getUser() != null ? agency.getUser().getEmail() : "Inconnu")
                 .build();
+    }
+
+    /**
+     * Récupère le nombre de personnes en attente dans une agence
+     * @param agencyId ID de l'agence
+     * @return Nombre de tickets non servis (personnes en attente)
+     */
+    public int getQueueCount(Long agencyId) {
+        return ticketRepository.countByAgencyIdAndServedFalse(agencyId);
+    }
+
+    /**
+     * Récupère le numéro actuellement servi dans l'agence
+     * @param agencyId ID de l'agence
+     * @return Numéro du ticket en cours ou null si aucun ticket en attente
+     */
+    public Integer getCurrentNumber(Long agencyId) {
+        return ticketRepository.findTopByAgencyIdAndServedFalseOrderByNumberAsc(agencyId)
+                .map(Ticket::getNumber)
+                .orElse(null);
     }
 }

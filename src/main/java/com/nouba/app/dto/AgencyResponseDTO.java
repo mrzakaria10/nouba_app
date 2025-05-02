@@ -14,4 +14,5 @@ public class AgencyResponseDTO {
     private String phone;
     private String cityName;
     private String email;
+    //private String photoUrl; // Assurez-vous que ce champ existe
 }

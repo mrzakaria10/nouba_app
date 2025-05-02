@@ -1,27 +1,35 @@
 package com.nouba.app.dto;
 
+/**
+ * Classe générique pour les réponses API
+ * @param <T> Type des données à retourner
+ */
 public class ApiResponse<T> {
-    private T data;
-    private String message;
-    private int status;
+    private T data;         // Données de la réponse
+    private String message; // Message descriptif
+    private int status;     // Code statut HTTP
 
-    // Constructeur avec données et message
+    /**
+     * Constructeur complet
+     * @param data Données à retourner
+     * @param message Message descriptif
+     * @param status Code statut HTTP
+     */
     public ApiResponse(T data, String message, int status) {
         this.data = data;
         this.message = message;
         this.status = status;
     }
 
-    // Constructeur sans données (juste un message)
+    /**
+     * Constructeur sans données
+     * @param message Message descriptif
+     * @param status Code statut HTTP
+     */
     public ApiResponse(String message, int status) {
-        this.message = message;
-        this.status = status;
+        this(null, message, status);
     }
-    //
-    public ApiResponse(String agenceCrééeAvecSuccès, int value, AgencyResponseDTO response) {
 
-    }
-    //
     // Getters et Setters
     public T getData() {
         return data;

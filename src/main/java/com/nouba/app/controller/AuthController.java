@@ -32,7 +32,7 @@ public class AuthController {
 
     // Méthode pour gérer la connexion de l'utilisateur (login).
     @PostMapping("/login") // Cette annotation définit une route HTTP POST pour la connexion.
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) throws Exception {
         // La méthode prend un `LoginRequest` qui contient les informations nécessaires pour se connecter (email et mot de passe).
         // @Valid s'assure que les données de la requête sont validées avant de procéder à l'exécution.
 
@@ -55,19 +55,7 @@ public class AuthController {
         // Retourner une réponse JSON avec un message de succès d'enregistrement.
         return ResponseEntity.ok(response);  // Code HTTP 200, avec la réponse d'inscription.
     }
-    @PostMapping("/register-agency") // Cette annotation définit une route HTTP POST pour l'enregistrement d'un nouvel utilisateur.
-    public ResponseEntity<ApiResponse<String>> register(@Valid @RequestBody AgencyRegisterRequest request) throws Exception {
-        // La méthode prend un `RegisterRequest` qui contient les informations nécessaires pour inscrire un nouvel utilisateur.
-        // @Valid s'assure que les données de la requête sont validées avant de procéder à l'enregistrement.
 
-        // Appel du service d'authentification pour inscrire l'utilisateur en base de données.
-        ApiResponse<String> response = authService.registerAgency(request);
-
-        // Retourner une réponse JSON avec un message de succès d'enregistrement.
-        return ResponseEntity.ok(response);  // Code HTTP 200, avec la réponse d'inscription.
-    }
-    //add register-admin
-    // Dans AuthController.java
     @PostMapping("/register-admin")
     public ResponseEntity<ApiResponse<String>> registerAdmin(
             @Valid @RequestBody AdminRegisterRequest request) {

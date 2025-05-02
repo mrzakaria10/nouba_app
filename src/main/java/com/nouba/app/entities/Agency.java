@@ -1,7 +1,11 @@
 package com.nouba.app.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.List;
 
 @Entity
 @Data
@@ -14,15 +18,25 @@ public class Agency {
     private Long id;
 
     private String name;
-
+    //private String photoUrl; // Chemin ou URL de la photo
     private String address;
     private String phone;
 
     @ManyToOne
     @JoinColumn(name = "city_id", nullable = false)
+    @JsonIgnoreProperties("agencies")
     private City city;
 
+
     @OneToOne
+            (cascade = CascadeType.ALL, orphanRemoval = true)
+
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
+
+    @OneToMany(mappedBy = "agency")
+    @JsonIgnore // Add this to break circular reference
+    private List<Ticket> tickets;
+
+
 }

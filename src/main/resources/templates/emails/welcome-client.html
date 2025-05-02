@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <!-- Meta tags for proper rendering -->
+    <meta charset="UTF-8">
+    <title>Bienvenue chez Nouba</title>
+    <style>
+        /* Basic styling for email */
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        ul { padding-left: 20px; }
+    </style>
+</head>
+<body>
+<!-- Personalized greeting -->
+<p>Bonjour ${name},</p>
+
+<!-- Main message -->
+<p>Votre compte client a été créé avec succès sur notre plateforme Nouba.</p>
+
+<!-- Account details section -->
+<h3>Vos informations de compte :</h3>
+<ul>
+    <li><strong>Nom :</strong> ${name}</li>
+    <li><strong>Email :</strong> ${email}</li>
+    <li><strong>Mot de passe :</strong> ${password}</li>
+    <li><strong>Téléphone :</strong> ${phone}</li>
+    <li><strong>Adresse :</strong> ${address}</li>
+</ul>
+
+<!-- Security recommendations -->
+<p>Pour des raisons de sécurité, nous vous recommandons de :</p>
+<ol>
+    <li>Changer votre mot de passe après votre première connexion</li>
+    <li>Ne jamais partager vos identifiants</li>
+</ol>
+
+<!-- Activation reminder -->
+<p>Pour activer votre compte, veuillez cliquer sur le lien d'activation envoyé séparément.</p>
+
+<!-- Closing -->
+<p>Cordialement,<br>L'équipe Nouba</p>
+</body>
+</html>

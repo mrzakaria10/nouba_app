@@ -24,4 +24,6 @@ public class AgencyUpdateDTO {
     private String email;
     @NotNull
     private Long cityId; // Changed from primitive long to Long for proper null checking
+
+    //private String PhotoUrl;
 }

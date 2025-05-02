@@ -2,6 +2,7 @@ package com.nouba.app.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.List;
 
 @Entity
 @Data
@@ -13,4 +14,7 @@ public class City {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
+    @OneToMany(mappedBy = "city")
+    private List<Agency> agencies;
+
 }
