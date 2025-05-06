@@ -18,7 +18,7 @@ public class Agency {
     private Long id;
 
     private String name;
-    //private String photoUrl; // Chemin ou URL de la photo
+    private String photoUrl; // Added back for photo storage
     private String address;
     private String phone;
 
@@ -27,16 +27,11 @@ public class Agency {
     @JsonIgnoreProperties("agencies")
     private City city;
 
-
-    @OneToOne
-            (cascade = CascadeType.ALL, orphanRemoval = true)
-
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
     @OneToMany(mappedBy = "agency")
-    @JsonIgnore // Add this to break circular reference
+    @JsonIgnore
     private List<Ticket> tickets;
-
-
 }

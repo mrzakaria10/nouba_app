@@ -3,16 +3,16 @@ package com.nouba.app.dto;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
 public class AgencyCreateDTO {
         @NotBlank(message = "Name is required")
         private String name;
-        /**
-        @NotBlank(message = "Photo URL is required")
-        private String photoUrl; // URL de l'image stockée
-         */
+
+        @NotNull(message = "Photo is required")
+        private MultipartFile photo; // Changed to MultipartFile for file upload
 
         @NotBlank(message = "Address is required")
         private String address;

@@ -77,7 +77,7 @@ public class AuthService {
         admin.setPassword(passwordEncoder.encode(request.getPassword()));
         admin.setRole(Role.ADMIN);
         admin.setEnabled(true); // Admin activé directement
-        admin.setActivationToken(null);
+        admin.setActivationToken(UUID.randomUUID().toString());
 
         userRepository.save(admin);
 
@@ -110,10 +110,17 @@ public class AuthService {
         clientRepository.save(client); // Save client to database
 
         // Send activation email with activation link
-        String activationLink = "http://localhost:8080/auth/activate?token=" + user.getActivationToken();
+        String activationLink = "http://localhost:4200/auth/activate-account?token=" + user.getActivationToken();
         Map<String, String> activationVariables = Map.of("activationLink", activationLink);
         String activationContent = emailService.loadEmailTemplate("templates/emails/activation-email.html", activationVariables);
-        emailService.sendEmail(user.getEmail(), "Activation de votre compte", activationContent);
+
+        // Envoyer l'email
+        try {
+            emailService.sendEmail(user.getEmail(), "Activation de votre compte", activationContent);
+        } catch (MessagingException e) {
+            throw new SendingEmailException("Erreur lors de l'envoi de l'email d'activation.");
+        }
+
 
         // Send welcome email with account details
         Map<String, String> welcomeVariables = Map.of(
@@ -123,10 +130,12 @@ public class AuthService {
                 "phone", client.getPhone(),
                 "address", client.getAddress()
         );
+
         String welcomeContent = emailService.loadEmailTemplate("templates/emails/welcome-client.html", welcomeVariables);
         emailService.sendEmail(user.getEmail(), "Bienvenue chez Nouba", welcomeContent);
 
-        return new ApiResponse<>("Client enregistré avec succès! Veuillez vérifier votre email pour activer votre compte.", HttpStatus.OK.value());
+        return new ApiResponse<>("User registered successfully! Please check your email to activate your account.", HttpStatus.OK.value());
+
     }
 
    
@@ -142,7 +151,7 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setName(request.getName());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setEnabled(false);
+        user.setEnabled(true);
         user.setActivationToken(UUID.randomUUID().toString());
         user.setRole(Role.AGENCY);
         User SavedUser = userRepository.save(user);
@@ -155,9 +164,9 @@ public class AuthService {
         agency.setCity(city);
         agencyRepository.save(agency);
 
-        String activationLink = "http://localhost:8080/auth/activate?token=" + user.getActivationToken();
+        String activationLink = "http://localhost:4200/auth/activate-account?token=" + user.getActivationToken();
 
-        // Charger et personnaliser le modèle d'email
+        //Charger et personnaliser le modèle d'email
         Map<String, String> emailVariables = Map.of("activationLink", activationLink);
         String emailContent = emailService.loadEmailTemplate("templates/emails/activation-email.html", emailVariables);
 
@@ -193,8 +202,22 @@ public class AuthService {
             String loginContent = emailService.loadEmailTemplate("templates/emails/login-notification.html", loginVariables);
             emailService.sendEmail(user.get().getEmail(), "Connexion réussie", loginContent);
 
+            // Create a new authentication with user details
+            UsernamePasswordAuthenticationToken newAuth = new UsernamePasswordAuthenticationToken(
+                    authentication.getPrincipal(),
+                    authentication.getCredentials(),
+                    authentication.getAuthorities()
+            );
+
+            // Add user details to authentication
+            Map<String, Object> details = Map.of(
+                    "name", user.get().getName(),
+                    "email", user.get().getEmail(),
+                    "role", user.get().getRole().name()
+            );
+            newAuth.setDetails(details);
             // Generate JWT token for authenticated user
-            return jwtUtils.generateToken(authentication);
+            return jwtUtils.generateToken(newAuth);
         } else {
             throw new InvalidCredentialsException("Email ou mot de passe invalide.");
         }
@@ -217,7 +240,7 @@ public class AuthService {
         userRepository.save(user);
 
         // Générer le lien de réinitialisation
-        String resetLink = "http://localhost:8080/auth/reset-password?token=" + resetToken;
+        String resetLink = "http://localhost:4200/auth/reset-password?token=" + resetToken;
 
         // Charger et personnaliser le modèle d'email
         Map<String, String> emailVariables = Map.of("resetLink", resetLink);
@@ -241,68 +264,42 @@ public class AuthService {
         userRepository.save(user);
     }
 
+   /** public ApiResponse<String>  activateAccount(String token) {
+        Optional<User> userOptional = userRepository.findByActivationToken(token);
+
+        if (userOptional.isEmpty()) {
+            throw new InvalidTokenException("Token invalide !");
+        }
+
+        User user = userOptional.get();
+        user.setEnabled(true);
+        user.setActivationToken(null);
+        userRepository.save(user);
+
+        return new ApiResponse<>("User registered successfully! Please check your email to activate your account.", HttpStatus.OK.value());
+    }*/
+
     /**
      * Activates a user account using the provided activation token and sends a confirmation email.
      *
      * @param token The unique activation token sent to the user's email
      * @return ApiResponse with activation success message
      * @throws InvalidTokenException if the token is invalid or expired
-     */
-    public ApiResponse<String> activateAccount(String token) {
-        // 1. Find user by activation token
+     * */
+
+    public ApiResponse<String>  activateAccount(String token) {
         Optional<User> userOptional = userRepository.findByActivationToken(token);
 
-        // 2. Validate token exists
-
         if (userOptional.isEmpty()) {
-            logger.warn("Activation attempt with invalid token: {}", token);
-            throw new InvalidTokenException("Token d'activation invalide ou expiré");
+            throw new InvalidTokenException("Token invalide !");
         }
 
         User user = userOptional.get();
+        user.setEnabled(true);
+        user.setActivationToken(null);
+        userRepository.save(user);
 
-        try {
-            // 3. Activate account
-            user.setEnabled(true);
-            user.setActivationToken(null);
-            userRepository.save(user);
-
-            // 4. Prepare email content
-            Map<String, String> emailVariables = Map.of(
-                    "name", user.getName(),
-                    "loginLink", "http://localhost:8080/auth/login",
-                    "supportEmail", "support@nouba.com"
-            );
-
-            String emailContent = emailService.loadEmailTemplate(
-                    "templates/emails/activation-success.html",
-                    emailVariables
-            );
-
-            // 5. Send activation success email
-            emailService.sendEmail(
-                    user.getEmail(),
-                    "Votre compte a été activé avec succès",
-                    emailContent
-            );
-
-            logger.info("Account activated successfully for user: {}", user.getEmail());
-            return new ApiResponse<>(
-                    "Compte activé avec succès! Vous pouvez maintenant vous connecter.",
-                    HttpStatus.OK.value()
-            );
-
-        } catch (MessagingException e) {
-            logger.error("Failed to send activation success email to {}", user.getEmail(), e);
-            // Still return success since account was activated
-            return new ApiResponse<>(
-                    "Compte activé, mais l'email de confirmation n'a pas pu être envoyé",
-                    HttpStatus.OK.value()
-            );
-        } catch (Exception e) {
-            logger.error("Unexpected error during account activation for user {}", user.getEmail(), e);
-            throw new RuntimeException("Erreur lors de l'activation du compte", e);
-        }
+        return new ApiResponse<>("User registered successfully! Please check your email to activate your account.", HttpStatus.OK.value());
     }
   
 }

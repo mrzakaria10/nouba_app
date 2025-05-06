@@ -8,11 +8,14 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
+import org.springframework.security.core.userdetails.UserDetails;
+
 
 import java.util.Date;
 import java.util.stream.Collectors;
 import java.util.List;
 import javax.crypto.SecretKey;
+import java.util.Map;
 
 @Component
 public class JwtUtils {
@@ -28,9 +31,19 @@ public class JwtUtils {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
+        // Get user details from authentication
+        @SuppressWarnings("unchecked")
+        Map<String, Object> details = (Map<String, Object>) authentication.getDetails();
+        String name = (String) details.get("name");
+        String email = (String) details.get("email");
+        String role = (String) details.get("role");
+
         return Jwts.builder()
                 .setSubject(username) // Set email or username
                 .claim("roles", roles) // Embed roles inside the token
+                .claim("name", name) // Add name to the token
+                .claim("email", email) // Add email to the token
+                .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(secretKey)
@@ -60,5 +73,17 @@ public class JwtUtils {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public String extractName(String token) {
+        return extractClaims(token).get("name", String.class);
+    }
+
+    public String extractEmail(String token) {
+        return extractClaims(token).get("email", String.class);
+    }
+
+    public String extractRole(String token) {
+        return extractClaims(token).get("role", String.class);
     }
 }

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/tickets")
+@RequestMapping("/tickets")
 @RequiredArgsConstructor
 public class TicketController {
 
@@ -57,7 +57,7 @@ public class TicketController {
     /**
      * Get number of people ahead in queue
      */
-    @GetMapping("/{ticketId}/ahead")
+    @GetMapping("/{ticketId}/{clientId}/ahead")
     public ResponseEntity<ApiResponse<Integer>> getPeopleAhead(
             @PathVariable Long ticketId,
             @AuthenticationPrincipal User user) {

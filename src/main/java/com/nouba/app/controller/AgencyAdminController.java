@@ -8,122 +8,74 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-/**
- * Contrôleur pour la gestion administrative des agences
- */
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/admin/agencies")
 @RequiredArgsConstructor
 public class AgencyAdminController {
-
     private final AgencyAdminService agencyAdminService;
 
-    /**
-     * Endpoint pour uploader une photo d'agence
-     * @param file Le fichier image à uploader
-     * @return ResponseEntity contenant l'URL de la photo uploadée
-
-    @PostMapping("/upload-photo")
-    public ResponseEntity<ApiResponse<String>> uploadPhoto(
-            @RequestParam("file") MultipartFile file) {
-        try {
-            String photoUrl = fileStorageService.storeFile(file);
-            return ResponseEntity.ok(
-                    new ApiResponse<>(
-                            photoUrl,
-                            "Photo téléversée avec succès",
-                            HttpStatus.OK.value()
-                    ));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(
-                            null,
-                            "Erreur lors du téléversement: " + e.getMessage(),
-                            HttpStatus.INTERNAL_SERVER_ERROR.value()
-                    ));
-        }
-    }*/
-
-    /**
-     * Crée une nouvelle agence avec possibilité d'upload de photo
-     * @param agencyDTO DTO de création d'agence contenant les infos de l'agence
-     * @return Réponse avec l'agence créée
-     */
     @PostMapping
-    public ResponseEntity<ApiResponse<AgencyResponseDTO>> addAgency(
-            @Valid @RequestBody AgencyCreateDTO agencyDTO) {
+    public ResponseEntity<ApiResponse<AgencyResponseDTO>> createAgency(
+            @Valid @ModelAttribute AgencyCreateDTO dto) throws IOException {
         try {
-            AgencyResponseDTO response = agencyAdminService.createAgency(agencyDTO);
+            AgencyResponseDTO response = agencyAdminService.createAgency(dto);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(
                             response,
-                            "Agence créée avec succès",
-                            HttpStatus.CREATED.value()
-                    ));
+                            "Agency created successfully",
+                            HttpStatus.CREATED.value()));
         } catch (UserAlreadyExistsException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new ApiResponse<>(
                             null,
-                            "Un utilisateur avec cet email existe déjà",
-                            HttpStatus.CONFLICT.value()
-                    ));
+                            e.getMessage(),
+                            HttpStatus.CONFLICT.value()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             null,
-                            "Erreur interne lors de la création de l'agence",
-                            HttpStatus.INTERNAL_SERVER_ERROR.value()
-                    ));
+                            "Error creating agency: " + e.getMessage(),
+                            HttpStatus.INTERNAL_SERVER_ERROR.value()));
         }
     }
 
-    /**
-     * Met à jour une agence existante
-     * @param id ID de l'agence
-     * @param updateDTO DTO de mise à jour
-     * @return Réponse avec l'agence mise à jour
-     */
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<AgencyResponseDTO>> updateAgency(
             @PathVariable Long id,
-            @RequestBody AgencyUpdateDTO updateDTO) {
-        AgencyResponseDTO response = agencyAdminService.updateAgency(id, updateDTO, updateDTO.getCityId());
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        response,
-                        "Agence mise à jour avec succès",
-                        HttpStatus.OK.value()
-                )
-        );
-    }
-
-    /**
-     * Supprime une agence après vérification des droits de l'utilisateur
-     * @param id ID de l'agence à supprimer
-     * @param userId ID de l'utilisateur effectuant la suppression (optionnel)
-     * @return Confirmation de suppression
-     */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteAgency(
-            @PathVariable Long id,
-            @RequestParam(required = false) Long userId) {  // Rend le paramètre optionnel
+            @ModelAttribute AgencyUpdateDTO dto) throws IOException {
         try {
-            agencyAdminService.deleteAgency(id, userId);
-            return ResponseEntity.ok(
-                    new ApiResponse<>(
-                            null,
-                            "Agence supprimée avec succès",
-                            HttpStatus.OK.value()
-                    )
-            );
+            AgencyResponseDTO response = agencyAdminService.updateAgency(id, dto);
+            return ResponseEntity.ok(new ApiResponse<>(
+                    response,
+                    "Agency updated successfully",
+                    HttpStatus.OK.value()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             null,
-                            "Erreur lors de la suppression: " + e.getMessage(),
-                            HttpStatus.INTERNAL_SERVER_ERROR.value()
-                    ));
+                            "Error updating agency: " + e.getMessage(),
+                            HttpStatus.INTERNAL_SERVER_ERROR.value()));
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteAgency(@PathVariable Long id) {
+        try {
+            agencyAdminService.deleteAgency(id);
+            return ResponseEntity.ok(new ApiResponse<>(
+                    null,
+                    "Agency deleted successfully",
+                    HttpStatus.OK.value()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            null,
+                            "Error deleting agency: " + e.getMessage(),
+                            HttpStatus.INTERNAL_SERVER_ERROR.value()));
         }
     }
 }

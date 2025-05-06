@@ -5,12 +5,15 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
 public class AgencyUpdateDTO {
     @NotBlank(message = "Name is required")
     private String name;
+
+    private MultipartFile photo; // Optional photo update
 
     @NotBlank(message = "Address is required")
     private String address;
