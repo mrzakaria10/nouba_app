@@ -10,22 +10,73 @@ import java.util.Optional;
 
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
-    @Query("SELECT MAX(t.number) FROM Ticket t WHERE t.agency.id = :agencyId AND t.served = false")
-    Optional<Integer> findMaxNumberByAgencyAndUnserved(@Param("agencyId") Long agencyId);
+    boolean existsByIdAndClientUserId(Long ticketId, Long userId);
 
-    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.agency.id = :agencyId AND t.number < :number AND t.served = false")
-    int countByAgencyIdAndNumberLessThanAndServedFalse(@Param("agencyId") Long agencyId,
-                                                       @Param("number") Integer number);
+    /**
+     * Finds the maximum sequence number for an agency
+     * يجد الحد الأقصى للرقم التسلسلي لوكالة
+     */
+    @Query("SELECT MAX(CAST(SUBSTRING(t.number, 6) AS int)) FROM Ticket t WHERE t.agency.id = :agencyId")
+    Optional<Integer> findMaxSequenceByAgency(@Param("agencyId") Long agencyId);
 
-    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.agency.id = :agencyId AND t.served = false")
-    int countByAgencyIdAndServedFalse(@Param("agencyId") Long agencyId);
+    /**
+     * Counts pending tickets before a specific number
+     * يحسب التذاكر المعلقة قبل رقم معين
+     */
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.agency.id = :agencyId AND CAST(SUBSTRING(t.number, 6) AS int) < :sequence AND t.status = 'EN_ATTENTE'")
+    int countByAgencyIdAndSequenceLessThanAndPending(@Param("agencyId") Long agencyId,
+                                                     @Param("sequence") Integer sequence);
 
-    @Query("SELECT t FROM Ticket t WHERE t.agency.id = :agencyId AND t.served = false ORDER BY t.number ASC")
-    Optional<Ticket> findTopByAgencyIdAndServedFalseOrderByNumberAsc(@Param("agencyId") Long agencyId);
+    /**
+     * Counts pending tickets for an agency
+     * يحسب التذاكر المعلقة لوكالة
+     */
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.agency.id = :agencyId AND t.status = 'EN_ATTENTE'")
+    int countPendingByAgencyId(@Param("agencyId") Long agencyId);
 
+    /**
+     * Finds the next ticket to serve
+     * يجد التذكرة التالية للخدمة
+     */
+    @Query("SELECT t FROM Ticket t WHERE t.agency.id = :agencyId AND t.status = 'EN_ATTENTE' ORDER BY CAST(SUBSTRING(t.number, 6) AS int) ASC")
+    Optional<Ticket> findNextPendingByAgencyId(@Param("agencyId") Long agencyId);
+
+    /**
+     * Finds a ticket by ID and user ID
+     * يجد تذكرة بواسطة المعرف ومعرف المستخدم
+     */
     @Query("SELECT t FROM Ticket t WHERE t.id = :ticketId AND t.client.user.id = :userId")
     Optional<Ticket> findByIdAndClientUserId(@Param("ticketId") Long ticketId,
                                              @Param("userId") Long userId);
-    // Ajout de la méthode manquante
-    List<Ticket> findByServedFalse();
+
+    /**
+     * Finds the currently serving ticket
+     * يجد التذكرة قيد المعالجة حالياً
+     */
+    @Query("SELECT t FROM Ticket t WHERE t.agency.id = :agencyId AND t.status = 'EN_COURS'")
+    Optional<Ticket> findCurrentlyServingByAgencyId(@Param("agencyId") Long agencyId);
+
+    /**
+     * Finds tickets by status
+     * يجد التذاكر حسب الحالة
+     */
+    List<Ticket> findByStatus(Ticket.TicketStatus status);
+
+    /**
+     * Counts tickets by agency ID where served is false
+     * يحسب التذاكر لوكالة حيث لم يتم الخدمة بعد
+     */
+    int countByAgencyIdAndServedFalse(Long agencyId);
+
+    /**
+     * Finds tickets by agency ID and served status
+     * يجد التذاكر لوكالة وحالة الخدمة
+     */
+    List<Ticket> findByAgencyIdAndServed(Long agencyId, boolean served);
+
+    /**
+     * Counts tickets by agency ID and status
+     * يحسب التذاكر لوكالة وحالتها
+     */
+    int countByAgencyIdAndStatus(Long agencyId, Ticket.TicketStatus status);
 }

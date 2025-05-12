@@ -33,15 +33,15 @@ public class AgencyService {
                 .orElseThrow(() -> new RuntimeException("Agency not found"));
     }
 
-    public int getQueueCount(Long agencyId) {
+    /**public int getQueueCount(Long agencyId) {
         return ticketRepository.countByAgencyIdAndServedFalse(agencyId);
     }
 
-    public Integer getCurrentNumber(Long agencyId) {
-        return ticketRepository.findTopByAgencyIdAndServedFalseOrderByNumberAsc(agencyId)
+    public String getCurrentNumber(Long agencyId) {
+        return ticketRepository.findFirstByAgencyIdAndServedFalseOrderByNumberAsc(agencyId)
                 .map(Ticket::getNumber)
                 .orElse(null);
-    }
+    }*/
 
     private AgencyResponseDTO convertToDTO(Agency agency) {
         return AgencyResponseDTO.builder()

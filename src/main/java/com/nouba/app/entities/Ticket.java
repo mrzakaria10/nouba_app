@@ -5,46 +5,88 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 
-@Entity // Indique que cette classe est une entité JPA
-@Data // Lombok - Génère getters, setters, toString, equals, hashCode
-@NoArgsConstructor // Lombok - Génère un constructeur sans arguments
-@AllArgsConstructor // Lombok - Génère un constructeur avec tous les arguments
+@Entity
+@Table(name = "ticket")  // Explicitly maps to the "ticket" table
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Ticket {
 
-    @Id // Marque ce champ comme identifiant primaire
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-incrémentation
-    private Long id; // Identifiant unique du ticket
-
-    @Column(nullable = false) // Le numéro ne peut pas être null
-    private Integer number; // Numéro du ticket dans la file d'attente
-
-    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE") // Valeur par défaut
-    private Boolean served = false; // Si le ticket a été servi (isServed existe déjà sous ce nom)
-
-    @Column(nullable = false, updatable = false) // Ne peut pas être modifié après création
-    private LocalDateTime issuedAt; // Date/heure de création du ticket
-
-    @Column(nullable = true) // Peut être null tant que le ticket n'est pas servi
-    private LocalDateTime servedAt; // Date/heure où le ticket a été servi
-
-    @ManyToOne(optional = false) // Un ticket doit avoir un client
-    @JoinColumn(name = "client_id", nullable = false)
-    @JsonIgnoreProperties("tickets") // Add this
-    private Client client; // Client associé à ce ticket
-
-    @ManyToOne(optional = false) // Un ticket doit avoir une agence
-    @JoinColumn(name = "agency_id", nullable = false)
-    @JsonIgnoreProperties("tickets") // Add this
-    private Agency agency; // Agence où le ticket a été émis
-
-    // Méthode utilitaire pour vérifier si le ticket est servi
-    public boolean isServed() {
-        return Boolean.TRUE.equals(served); // Null-safe check
+    public enum TicketStatus {
+        EN_ATTENTE,  // Waiting / في انتظار
+        EN_COURS,    // In progress / قيد المعالجة
+        TERMINE      // Completed / مكتمل
     }
 
-    // Méthode pour marquer le ticket comme servi
-    public void markAsServed() {
-        this.served = true;
-        this.servedAt = LocalDateTime.now();
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String number;  // // Format: NOUBA001 Changed to String for formatted number / تم التغيير إلى String لتنسيق الرقم
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TicketStatus status = TicketStatus.EN_ATTENTE;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime issuedAt; // Date de création / تاريخ الإنشاء
+
+    @Column(nullable = true)
+    private LocalDateTime startedAt; // Quand le traitement commence / عندما تبدأ المعالجة
+
+    @Column(nullable = true)
+    private LocalDateTime completedAt; // Quand le traitement commence / عندما تبدأ المعالجة
+
+    // Add explicit served field to match repository queries
+    @Column(nullable = false)
+    private boolean served = false;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "client_id", nullable = false)
+    @JsonIgnoreProperties("tickets")
+    private Client client;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "agency_id", nullable = false)
+    @JsonIgnoreProperties("tickets")
+    private Agency agency;
+
+    /**
+     * Génère un numéro de ticket formaté / يقوم بإنشاء رقم تذكرة منسق
+     * @param sequence Le numéro séquentiel / الرقم التسلسلي
+     * @return Numéro de ticket formaté (ex: NOUBA001) / رقم التذكرة المنسق
+     */
+    public static String generateTicketNumber(int sequence) {
+        return String.format("NOUBA%03d", sequence); // Format: NOUBA + 3-digit number / تنسيق: NOUBA + رقم مكون من 3 خانات
+    }
+
+    // Method to update status to "en cours" / طريقة لتحديث الحالة إلى "قيد المعالجة"
+    public void startProcessing() {
+        this.status = TicketStatus.EN_COURS;
+        this.startedAt = LocalDateTime.now();
+    }
+
+    // Method to update status to "terminé" / طريقة لتحديث الحالة إلى "مكتمل"
+    public void completeProcessing() {
+        this.status = TicketStatus.TERMINE;
+        this.completedAt = LocalDateTime.now();
+    }
+    /**
+     * Returns whether the ticket has been served
+     * Now uses both the explicit field and status for reliability
+     */
+    public boolean isServed() {
+        return this.served || this.status == TicketStatus.TERMINE;
+    }
+
+    /**
+     * Helper method to keep served status in sync with ticket status
+     */
+    @PreUpdate
+    @PrePersist
+    private void updateServedStatus() {
+        this.served = this.status == TicketStatus.TERMINE;
     }
 }

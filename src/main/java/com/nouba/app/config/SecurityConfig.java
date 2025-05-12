@@ -56,6 +56,9 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/admin/agencies").permitAll()
 
+                        // Explicitly secure ticket endpoints
+                        .requestMatchers("/tickets/**").authenticated()
+
 
                         // Toutes les autres requêtes nécessitent une authentification
                         .anyRequest().authenticated()

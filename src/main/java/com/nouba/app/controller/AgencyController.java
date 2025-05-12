@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/agencies")
+@RequestMapping(" /agencies")
 @RequiredArgsConstructor
 public class AgencyController {
     private final AgencyService agencyService;
@@ -29,7 +29,7 @@ public class AgencyController {
         return ResponseEntity.ok(agencyService.getAgenciesByCity(cityId));
     }
 
-    @GetMapping("/{agencyId}/queue-count")
+   /** @GetMapping("/{agencyId}/queue-count")
     public ResponseEntity<Integer> getQueueCount(@PathVariable Long agencyId) {
         return ResponseEntity.ok(agencyService.getQueueCount(agencyId));
     }
@@ -37,5 +37,5 @@ public class AgencyController {
     @GetMapping("/{agencyId}/current-number")
     public ResponseEntity<Integer> getCurrentNumber(@PathVariable Long agencyId) {
         return ResponseEntity.ok(agencyService.getCurrentNumber(agencyId));
-    }
+    }*/
 }
