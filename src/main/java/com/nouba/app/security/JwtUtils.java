@@ -37,6 +37,8 @@ public class JwtUtils {
         String name = (String) details.get("name");
         String email = (String) details.get("email");
         String role = (String) details.get("role");
+        Long id = (Long) details.get("id");
+
 
         return Jwts.builder()
                 .setSubject(username) // Set email or username
@@ -44,6 +46,7 @@ public class JwtUtils {
                 .claim("name", name) // Add name to the token
                 .claim("email", email) // Add email to the token
                 .claim("role", role)
+                .claim("id", id)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(secretKey)
