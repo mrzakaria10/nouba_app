@@ -194,6 +194,8 @@ public class AuthService {
                 throw new AccountIsNotEnabledException("Votre compte n'est pas activé. Veuillez vérifier votre email pour le lien d'activation.");
             }
 
+
+
             // Send login notification email
             Map<String, String> loginVariables = Map.of(
                     "name", user.get().getName(),
@@ -211,6 +213,7 @@ public class AuthService {
 
             // Add user details to authentication
             Map<String, Object> details = Map.of(
+                    "id", user.get().getId(),  // Add this line
                     "name", user.get().getName(),
                     "email", user.get().getEmail(),
                     "role", user.get().getRole().name()

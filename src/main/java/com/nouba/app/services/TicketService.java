@@ -41,9 +41,9 @@ public class TicketService {
                 .orElseThrow(() -> new RuntimeException("Agency not found"));
 
         // Verify client exists and matches the provided ID
-        if (!client.getId().equals(clientId)) {
+       /** if (!client.getId().equals(clientId)) {
             throw new RuntimeException("Client ID mismatch");
-        }
+        }*/
 
         Integer lastSequence = ticketRepository.findMaxSequenceByAgency(agencyId)
                 .orElse(0);

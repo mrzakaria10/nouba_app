@@ -3,6 +3,8 @@ package com.nouba.app.entities;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+import org.apache.commons.lang3.RandomStringUtils;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -83,10 +85,36 @@ public class Ticket {
 
     /**
      * Helper method to keep served status in sync with ticket status
-     */
+
     @PreUpdate
     @PrePersist
     private void updateServedStatus() {
         this.served = this.status == TicketStatus.TERMINE;
+    }
+    */
+
+
+    @Column(unique = true, nullable = false, updatable = false)
+    private String publicAccessCode; // Example: "NOUBA-001-ABC123"
+
+    /**
+     * Combined callback method for all pre-persist operations
+     */
+    @PrePersist
+    public void prePersistOperations() {
+        // Generate public access code if not set
+        if (this.publicAccessCode == null) {
+            this.publicAccessCode = "NOUBA-" +
+                    this.number.substring(5) + "-" +
+                    RandomStringUtils.randomAlphanumeric(6).toUpperCase();
+        }
+
+        // Set served status based on ticket status
+        this.served = this.status == TicketStatus.TERMINE;
+
+        // Set issuedAt if not already set
+        if (this.issuedAt == null) {
+            this.issuedAt = LocalDateTime.now();
+        }
     }
 }

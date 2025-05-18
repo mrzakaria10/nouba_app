@@ -87,7 +87,7 @@ public class AgencyAdminService {
 
         User user = agency.getUser();
         updateIfNotNull(updateDTO.getEmail(), user::setEmail);
-        updateIfNotNull(updateDTO.getName(), user::setName);
+       updateIfNotNull(updateDTO.getName(), user::setName);
         userRepository.save(user);
 
         return convertToDTO(agencyRepository.save(agency));

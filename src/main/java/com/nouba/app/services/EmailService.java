@@ -20,6 +20,8 @@ import java.util.Map;
 public class EmailService {
     private final JavaMailSender mailSender;
 
+
+
     //send info to your email
     public void sendAgencyCreationEmail(String toEmail, String agencyName,
                                         String address, String phone,
@@ -123,4 +125,45 @@ public class EmailService {
         // Send email
         sendEmail(email, "Connexion réussie", content);
     }
+
+  /**  public void sendTicketVerificationEmail(
+            String email,
+            String ticketNumber,
+            String clientName,
+            String agencyName,
+            String city,
+            String status,
+            int positionInQueue,
+            String estimatedWaitTime) {
+
+        String subject = "Ticket Verification: " + ticketNumber;
+        String content = String.format(
+                "Dear %s,\n\n" +
+                        "Your ticket verification details:\n\n" +
+                        "Ticket Number: %s\n" +
+                        "Agency: %s\n" +
+                        "City: %s\n" +
+                        "Current Status: %s\n" +
+                        "Position in Queue: %d\n" +
+                        "Estimated Wait Time: %s\n\n" +
+                        "Thank you for using our services.",
+                clientName, ticketNumber, agencyName, city,
+                status, positionInQueue, estimatedWaitTime
+        );
+
+        sendSimpleEmail(email, subject, content);
+    }
+
+    private void sendSimpleEmail(String email, String subject, String content) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setSubject(subject);
+        message.setText(content);
+        mailSender.send(message);
+        System.out.println("Email sent successfully!");
+        System.out.println("Email subject: " + subject);
+        System.out.println("Email content: " + content);
+        System.out.println("Email to: " + email);
+    }*/
+
 }

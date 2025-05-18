@@ -36,11 +36,8 @@ public class TicketController {
             @PathVariable Long clientId,
             @AuthenticationPrincipal User user) {
 
-        // Add null check for user
-       /** if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse<>(null, "Authentication required", 401));
-        }*/
+
+
 
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new RuntimeException("Client not found"));

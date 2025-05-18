@@ -31,6 +31,11 @@ public class JwtUtils {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
+// Get the UserDetails implementation
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
+
+
         // Get user details from authentication
         @SuppressWarnings("unchecked")
         Map<String, Object> details = (Map<String, Object>) authentication.getDetails();
@@ -38,6 +43,7 @@ public class JwtUtils {
         String email = (String) details.get("email");
         String role = (String) details.get("role");
         Long id = (Long) details.get("id");
+
 
 
         return Jwts.builder()
@@ -88,5 +94,8 @@ public class JwtUtils {
 
     public String extractRole(String token) {
         return extractClaims(token).get("role", String.class);
+    }
+    public Long extractId(String token) {
+        return extractClaims(token).get("id", Long.class);
     }
 }

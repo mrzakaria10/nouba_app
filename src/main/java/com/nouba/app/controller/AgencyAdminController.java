@@ -46,7 +46,7 @@ public class AgencyAdminController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<AgencyResponseDTO>> updateAgency(
             @PathVariable Long id,
-            @ModelAttribute AgencyUpdateDTO dto) throws IOException {
+            @ModelAttribute @Valid AgencyUpdateDTO dto) throws IOException {
         try {
             AgencyResponseDTO response = agencyAdminService.updateAgency(id, dto);
             return ResponseEntity.ok(new ApiResponse<>(
@@ -60,6 +60,7 @@ public class AgencyAdminController {
                             "Error updating agency: " + e.getMessage(),
                             HttpStatus.INTERNAL_SERVER_ERROR.value()));
         }
+
     }
 
     @DeleteMapping("/{id}")

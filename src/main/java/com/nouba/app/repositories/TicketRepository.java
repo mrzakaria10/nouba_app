@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -79,4 +80,13 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
      * يحسب التذاكر لوكالة وحالتها
      */
     int countByAgencyIdAndStatus(Long agencyId, Ticket.TicketStatus status);
+
+    // Add this method to your existing TicketRepository
+    @Query("SELECT t FROM Ticket t WHERE t.issuedAt BETWEEN :start AND :end")
+    List<Ticket> findByIssuedAtBetween(@Param("start") LocalDateTime start,
+                                       @Param("end") LocalDateTime end);
+
+    // Add to PUBLIC VERIFICATION
+    Optional<Ticket> findByNumber(String number);
+
 }

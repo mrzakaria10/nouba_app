@@ -59,6 +59,14 @@ public class SecurityConfig {
                         // Explicitly secure ticket endpoints
                         .requestMatchers("/tickets/**").authenticated()
 
+                        //public
+                        .requestMatchers("/public/tickets/**").permitAll()
+
+                        .requestMatchers("/users").hasRole("ADMIN")
+                        .requestMatchers("/users/role/**").hasAnyRole("ADMIN", "AGENCY", "CLIENT")
+                        .requestMatchers("/users/**").hasRole("ADMIN")
+                        .requestMatchers("/agencies/*/stats").hasAnyRole("ADMIN", "AGENCY")
+
 
                         // Toutes les autres requêtes nécessitent une authentification
                         .anyRequest().authenticated()

@@ -1,15 +1,18 @@
 package com.nouba.app.controller;
 
 import com.nouba.app.dto.*;
+import com.nouba.app.entities.User;
 import com.nouba.app.services.AgencyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping(" /agencies")
+@RequestMapping("/agencies")
 @RequiredArgsConstructor
 public class AgencyController {
     private final AgencyService agencyService;
@@ -27,6 +30,14 @@ public class AgencyController {
     @GetMapping("/city/{cityId}")
     public ResponseEntity<List<AgencyResponseDTO>> getAgenciesByCity(@PathVariable Long cityId) {
         return ResponseEntity.ok(agencyService.getAgenciesByCity(cityId));
+    }
+
+    @GetMapping("/{id}/stats")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENCY')")
+    public ResponseEntity<AgencyStatsDTO> getAgencyStats(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(agencyService.getAgencyStats(id, currentUser));
     }
 
    /** @GetMapping("/{agencyId}/queue-count")

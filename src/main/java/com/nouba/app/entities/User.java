@@ -6,6 +6,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -21,21 +22,27 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Role role;
 
+    @Column(nullable = false)
     private boolean enabled = false;
+
     private String activationToken;
 
-    @ManyToOne
-    private User user; // Self-reference
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
+
 
     // ========== UserDetails Implementation ==========
     @Override
@@ -45,7 +52,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return email; // Using email as username
+        return email;
     }
 
     @Override
