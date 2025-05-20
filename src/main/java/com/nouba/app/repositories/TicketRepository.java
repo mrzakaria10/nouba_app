@@ -89,4 +89,14 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     // Add to PUBLIC VERIFICATION
     Optional<Ticket> findByNumber(String number);
 
+    // Add this method if not already present
+    int countByStatus(Ticket.TicketStatus status);
+
+    // Add this new method
+    @Query("SELECT t FROM Ticket t WHERE t.number = :number AND t.agency.id = :agencyId AND t.agency.city.id = :cityId")
+    Optional<Ticket> findByNumberAndAgencyAndCity(
+            @Param("number") String number,
+            @Param("agencyId") Long agencyId,
+            @Param("cityId") Long cityId);
+
 }

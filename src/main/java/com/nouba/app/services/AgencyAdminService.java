@@ -97,12 +97,11 @@ public class AgencyAdminService {
     public void deleteAgency(Long id) {
         Agency agency = agencyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Agency not found"));
-
         if (agency.getPhotoUrl() != null) {
-            fileStorageService.deleteFile(agency.getPhotoUrl());
+           fileStorageService.deleteFile(agency.getPhotoUrl());
         }
 
-        userRepository.delete(agency.getUser());
+        //  userRepository.delete(agency.getUser());
         agencyRepository.delete(agency);
     }
 
