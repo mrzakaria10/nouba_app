@@ -59,8 +59,14 @@ public class SecurityConfig {
                         // Explicitly secure ticket endpoints
                         .requestMatchers("/tickets/**").authenticated()
 
+                        // Add to requestMatchers in SecurityConfig.java
+                        .requestMatchers("/users/active-this-week").hasRole("ADMIN")
+
                         //public
                         .requestMatchers("/public/tickets/**").permitAll()
+
+                        .requestMatchers("/tickets/admin/**").hasRole("ADMIN")
+
 
                         .requestMatchers("/users").hasRole("ADMIN")
                         .requestMatchers("/users/role/**").hasAnyRole("ADMIN", "AGENCY", "CLIENT")

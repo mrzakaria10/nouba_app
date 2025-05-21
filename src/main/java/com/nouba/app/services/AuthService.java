@@ -96,6 +96,7 @@ public class AuthService {
         User user = new User();
         user.setEmail(request.getEmail());
         user.setName(request.getName());
+        user.setPhone(request.getPhone());
         user.setPassword(passwordEncoder.encode(request.getPassword())); // Encrypt password
         user.setEnabled(false); // Account disabled until activation
         user.setActivationToken(UUID.randomUUID().toString()); // Generate unique activation token
@@ -150,6 +151,7 @@ public class AuthService {
         User user = new User();
         user.setEmail(request.getEmail());
         user.setName(request.getName());
+        user.setPhone(request.getPhone());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEnabled(true);
         user.setActivationToken(UUID.randomUUID().toString());

@@ -35,6 +35,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Role role;
 
+    @Column(name = "phone")
+    private String phone;
+
     @Column(nullable = false)
     private boolean enabled = false;
 
@@ -43,6 +46,9 @@ public class User implements UserDetails {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
+    // Add this new relationship
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Client client;
 
     // ========== UserDetails Implementation ==========
     @Override

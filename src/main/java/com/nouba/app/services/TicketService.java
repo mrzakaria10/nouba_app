@@ -1,5 +1,6 @@
 package com.nouba.app.services;
 
+import com.nouba.app.dto.TicketReservationDTO;
 import com.nouba.app.entities.*;
 import com.nouba.app.exceptions.TicketNotFoundException;
 import com.nouba.app.repositories.AgencyRepository;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -277,5 +279,32 @@ public class TicketService {
                     "Ticket not found or unauthorized / Ticket non trouvé ou non autorisé / التذكرة غير موجودة أو غير مصرح بها"
             );
         }
+    }
+
+    public List<TicketReservationDTO> getAllTicketsReservedToday() {
+        return ticketRepository.findAllTicketsReservedToday().stream()
+                .map(this::convertToReservationDTO)
+                .toList();
+    }
+
+    private TicketReservationDTO convertToReservationDTO(Ticket ticket) {
+        return TicketReservationDTO.builder()
+                .ticketNumber(ticket.getNumber())
+                .clientName(ticket.getClient().getUser().getName())
+                .clientEmail(ticket.getClient().getUser().getEmail())
+                .agencyName(ticket.getAgency().getName())
+                .city(ticket.getAgency().getCity().getName())
+                .issuedAt(ticket.getIssuedAt())
+                .timeAgo(calculateTimeAgo(ticket.getIssuedAt()))
+                .build();
+    }
+
+    private String calculateTimeAgo(LocalDateTime issuedAt) {
+        long minutes = ChronoUnit.MINUTES.between(issuedAt, LocalDateTime.now());
+        if (minutes < 60) {
+            return minutes + " minutes ago";
+        }
+        long hours = ChronoUnit.HOURS.between(issuedAt, LocalDateTime.now());
+        return hours + " hours ago";
     }
 }

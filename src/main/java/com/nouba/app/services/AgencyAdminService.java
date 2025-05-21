@@ -37,6 +37,7 @@ public class AgencyAdminService {
         User user = new User();
         user.setEmail(dto.getEmail());
         user.setName(dto.getName());
+        user.setPhone(dto.getPhone());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setRole(Role.AGENCY);
         user.setEnabled(true);

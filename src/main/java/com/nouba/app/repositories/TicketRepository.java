@@ -99,4 +99,14 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
             @Param("agencyId") Long agencyId,
             @Param("cityId") Long cityId);
 
+    // Add this to TicketRepository.java
+    @Query("SELECT t FROM Ticket t " +
+            "JOIN FETCH t.agency a " +
+            "JOIN FETCH a.city " +
+            "JOIN FETCH t.client c " +
+            "JOIN FETCH c.user " +
+            "WHERE DATE(t.issuedAt) = CURRENT_DATE " +
+            "ORDER BY t.issuedAt DESC")
+    List<Ticket> findAllTicketsReservedToday();
+
 }

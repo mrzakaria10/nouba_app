@@ -15,7 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 @Setter
-public class Client{
+public class Client {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,11 +26,10 @@ public class Client{
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @JsonIgnore
     private User user;
 
     @OneToMany(mappedBy = "client")
-    @JsonIgnore // Add this to break circular reference
+    @JsonIgnore
     private List<Ticket> tickets;
-
 }
-

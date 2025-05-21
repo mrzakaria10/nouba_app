@@ -2,16 +2,19 @@ package com.nouba.app.controller;
 
 import com.nouba.app.dto.ApiResponse;
 import com.nouba.app.dto.TicketDTO;
+import com.nouba.app.dto.TicketReservationDTO;
 import com.nouba.app.entities.*;
 import com.nouba.app.repositories.ClientRepository;
 import com.nouba.app.services.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -147,5 +150,14 @@ public class TicketController {
                         new ApiResponse<>(null,
                                 "No tickets being served / لا توجد تذاكر قيد الخدمة",
                                 200)));
+    }
+
+    @GetMapping("/admin/reservations/today")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<TicketReservationDTO>>> getAllTicketsReservedToday() {
+        List<TicketReservationDTO> tickets = ticketService.getAllTicketsReservedToday();
+        return ResponseEntity.ok(
+                new ApiResponse<>(tickets, "Today's ticket reservations retrieved", 200)
+        );
     }
 }
