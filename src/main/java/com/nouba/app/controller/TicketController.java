@@ -160,4 +160,43 @@ public class TicketController {
                 new ApiResponse<>(tickets, "Today's ticket reservations retrieved", 200)
         );
     }
+
+    /**
+     * Get all pending tickets for an agency / الحصول على جميع التذاكر المعلقة لوكالة
+     * @param agencyId ID of the agency / معرّف الوكالة
+     * @return ResponseEntity containing list of pending tickets / كيان الاستجابة يحتوي على قائمة التذاكر المعلقة
+     */
+    @GetMapping("/agency/{agencyId}/pending")
+    @PreAuthorize("hasAnyRole('AGENCY')")
+    public ResponseEntity<ApiResponse<List<TicketDTO>>> getAllPendingTicketsByAgency(
+            @PathVariable Long agencyId) {
+
+        List<Ticket> pendingTickets = ticketService.getAllPendingTicketsByAgency(agencyId);
+        List<TicketDTO> ticketDTOs = pendingTickets.stream()
+                .map(TicketDTO::from)
+                .toList();
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(ticketDTOs,
+                        "Pending tickets retrieved successfully",
+                        200));
+    }
+
+    /**
+     * Get count of pending tickets for an agency / الحصول على عدد التذاكر المعلقة لوكالة
+     * @param agencyId ID of the agency / معرّف الوكالة
+     * @return ResponseEntity containing count of pending tickets / كيان الاستجابة يحتوي على عدد التذاكر المعلقة
+     */
+    @GetMapping("/agency/{agencyId}/pending/count")
+    @PreAuthorize("hasAnyRole('AGENCY')")
+    public ResponseEntity<ApiResponse<Integer>> getPendingTicketsCountByAgency(
+            @PathVariable Long agencyId) {
+
+        int count = ticketService.countPendingTicketsByAgency(agencyId);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(count,
+                        "Pending tickets count retrieved successfully",
+                        200));
+    }
 }

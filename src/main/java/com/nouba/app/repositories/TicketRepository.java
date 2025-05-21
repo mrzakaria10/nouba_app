@@ -108,5 +108,12 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
             "WHERE DATE(t.issuedAt) = CURRENT_DATE " +
             "ORDER BY t.issuedAt DESC")
     List<Ticket> findAllTicketsReservedToday();
+    /**
+     * Finds all pending tickets for an agency
+     * Trouver tous les tickets en attente pour une agence
+     * العثور على جميع التذاكر المعلقة لوكالة
+     */
+    @Query("SELECT t FROM Ticket t WHERE t.agency.id = :agencyId AND t.status = 'EN_ATTENTE' ORDER BY CAST(SUBSTRING(t.number, 6) AS int) ASC")
+    List<Ticket> findAllPendingByAgencyId(@Param("agencyId") Long agencyId);
 
 }

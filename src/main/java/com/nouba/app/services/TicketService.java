@@ -307,4 +307,28 @@ public class TicketService {
         long hours = ChronoUnit.HOURS.between(issuedAt, LocalDateTime.now());
         return hours + " hours ago";
     }
+
+    /**
+     * Get all pending tickets for an agency
+     * Obtenir tous les tickets en attente pour une agence
+     * الحصول على جميع التذاكر المعلقة لوكالة
+     *
+     * @param agencyId Agency ID / ID de l'agence / معرّف الوكالة
+     * @return List of pending tickets / Liste des tickets en attente / قائمة التذاكر المعلقة
+     */
+    public List<Ticket> getAllPendingTicketsByAgency(Long agencyId) {
+        return ticketRepository.findAllPendingByAgencyId(agencyId);
+    }
+
+    /**
+     * Count pending tickets for an agency
+     * Compter les tickets en attente pour une agence
+     * حساب التذاكر المعلقة لوكالة
+     *
+     * @param agencyId Agency ID / ID de l'agence / معرّف الوكالة
+     * @return Number of pending tickets / Nombre de tickets en attente / عدد التذاكر المعلقة
+     */
+    public int countPendingTicketsByAgency(Long agencyId) {
+        return ticketRepository.countPendingByAgencyId(agencyId);
+    }
 }
