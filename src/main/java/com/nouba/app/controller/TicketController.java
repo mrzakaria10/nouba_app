@@ -2,6 +2,7 @@ package com.nouba.app.controller;
 
 import com.nouba.app.dto.*;
 import com.nouba.app.entities.*;
+import com.nouba.app.repositories.AgencyRepository;
 import com.nouba.app.repositories.ClientRepository;
 import com.nouba.app.repositories.ServiceRepository;
 import com.nouba.app.services.TicketService;
@@ -27,6 +28,7 @@ public class TicketController {
     private final TicketService ticketService;
     private final ClientRepository clientRepository;
     private final ServiceRepository serviceRepository;
+    private final AgencyRepository agencyRepository;
 
     /**
      * Create a new ticket for an agency with service selection
@@ -108,7 +110,9 @@ public class TicketController {
      * @return ResponseEntity containing served ticket info / كيان الاستجابة يحتوي على معلومات التذكرة المخدومة
      */
     @PutMapping("/agency/{agencyId}/serve")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> serveNextClient(            @PathVariable Long agencyId) {
+    @PreAuthorize("hasRole('AGENCY')")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> serveNextClient(
+            @PathVariable Long agencyId) {
 
         Optional<Ticket> servedTicketOpt = ticketService.serveNextClient(agencyId);
 
@@ -240,5 +244,138 @@ public class TicketController {
                 new ApiResponse<>(null,
                         "Ticket cancelled successfully",
                         200));
+    }
+
+    //RESET TICKET
+    @PostMapping("/admin/reset-tickets")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<String>> manualResetTickets() {
+        try {
+            ticketService.deleteAllTicketsDaily();
+            return ResponseEntity.ok(
+                    new ApiResponse<>(null, "All tickets deleted successfully", 200)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(null, "Reset failed: " + e.getMessage(), 500));
+        }
+    }
+
+    /// Agency Ticket History Endpoint
+
+    // Add to TicketController.java
+    @GetMapping("/agency/{agencyId}/history")
+    @PreAuthorize("hasAnyRole('AGENCY', 'ADMIN')")
+    public ResponseEntity<ApiResponse<List<TicketDTO>>> getAgencyTicketHistory(
+            @PathVariable Long agencyId,
+            @AuthenticationPrincipal User user) {
+
+        // Authorization check for agency users
+        if (user.getRole() == Role.AGENCY) {
+            Agency userAgency = agencyRepository.findByUser(user)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Agency not found"));
+
+            if (!userAgency.getId().equals(agencyId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse<>(null, "Not authorized to access this agency's history", 403));
+            }
+        }
+
+        List<TicketDTO> history = ticketService.getAgencyTicketHistory(agencyId);
+        return ResponseEntity.ok(
+                new ApiResponse<>(history, "Agency ticket history retrieved", 200));
+    }
+
+    // Add to TicketController.java
+
+    /**
+     * Get count of EN_ATTENTE tickets for agency today
+     * @param agencyId ID of the agency
+     * @return Count of waiting tickets
+     */
+    @GetMapping("/agency/{agencyId}/today/en-attente/count")
+    @PreAuthorize("hasAnyRole('AGENCY', 'ADMIN')")
+    public ResponseEntity<ApiResponse<Integer>> getEnAttenteCountToday(
+            @PathVariable Long agencyId,
+            @AuthenticationPrincipal User user) {
+
+        // Authorization check
+        if (user.getRole() == Role.AGENCY) {
+            verifyAgencyAccess(user, agencyId);
+        }
+
+        int count = ticketService.getEnAttenteCountToday(agencyId);
+        return ResponseEntity.ok(
+                new ApiResponse<>(count, "EN_ATTENTE count for today", 200));
+    }
+
+    /**
+     * Get count of EN_COURS tickets for agency today
+     * @param agencyId ID of the agency
+     * @return Count of in-progress tickets
+     */
+    @GetMapping("/agency/{agencyId}/today/en-cours/count")
+    @PreAuthorize("hasAnyRole('AGENCY', 'ADMIN')")
+    public ResponseEntity<ApiResponse<Integer>> getEnCoursCountToday(
+            @PathVariable Long agencyId,
+            @AuthenticationPrincipal User user) {
+
+        if (user.getRole() == Role.AGENCY) {
+            verifyAgencyAccess(user, agencyId);
+        }
+
+        int count = ticketService.getEnCoursCountToday(agencyId);
+        return ResponseEntity.ok(
+                new ApiResponse<>(count, "EN_COURS count for today", 200));
+    }
+
+    /**
+     * Get count of ANNULE tickets for agency today
+     * @param agencyId ID of the agency
+     * @return Count of cancelled tickets
+     */
+    @GetMapping("/agency/{agencyId}/today/annule/count")
+    @PreAuthorize("hasAnyRole('AGENCY', 'ADMIN')")
+    public ResponseEntity<ApiResponse<Integer>> getAnnuleCountToday(
+            @PathVariable Long agencyId,
+            @AuthenticationPrincipal User user) {
+
+        if (user.getRole() == Role.AGENCY) {
+            verifyAgencyAccess(user, agencyId);
+        }
+
+        int count = ticketService.getAnnuleCountToday(agencyId);
+        return ResponseEntity.ok(
+                new ApiResponse<>(count, "ANNULE count for today", 200));
+    }
+
+    /**
+     * Get count of TERMINE tickets for agency today
+     * @param agencyId ID of the agency
+     * @return Count of completed tickets
+     */
+    @GetMapping("/agency/{agencyId}/today/termine/count")
+    @PreAuthorize("hasAnyRole('AGENCY', 'ADMIN')")
+    public ResponseEntity<ApiResponse<Integer>> getTermineCountToday(
+            @PathVariable Long agencyId,
+            @AuthenticationPrincipal User user) {
+
+        if (user.getRole() == Role.AGENCY) {
+            verifyAgencyAccess(user, agencyId);
+        }
+
+        int count = ticketService.getTermineCountToday(agencyId);
+        return ResponseEntity.ok(
+                new ApiResponse<>(count, "TERMINE count for today", 200));
+    }
+
+    // Helper method for agency authorization
+    private void verifyAgencyAccess(User user, Long agencyId) {
+        Agency userAgency = agencyRepository.findByUser(user)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Agency not found"));
+
+        if (!userAgency.getId().equals(agencyId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized to access this agency's data");
+        }
     }
 }

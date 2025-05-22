@@ -2,6 +2,7 @@ package com.nouba.app.repositories;
 
 import com.nouba.app.entities.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -115,5 +116,32 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
      */
     @Query("SELECT t FROM Ticket t WHERE t.agency.id = :agencyId AND t.status = 'EN_ATTENTE' ORDER BY CAST(SUBSTRING(t.number, 6) AS int) ASC")
     List<Ticket> findAllPendingByAgencyId(@Param("agencyId") Long agencyId);
+
+    // Add to TicketRepository.java
+    @Modifying
+    @Query("DELETE FROM Ticket")
+    void deleteAllTickets();
+
+    // Add to TicketRepository.java
+    @Query("SELECT t FROM Ticket t WHERE t.agency.id = :agencyId ORDER BY t.issuedAt DESC")
+    List<Ticket> findAllByAgencyId(@Param("agencyId") Long agencyId);
+
+    // Add to TicketRepository.java
+
+    // Count EN_ATTENTE tickets for agency today
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.agency.id = :agencyId AND t.status = 'EN_ATTENTE' AND DATE(t.issuedAt) = CURRENT_DATE")
+    int countEnAttenteTodayByAgency(@Param("agencyId") Long agencyId);
+
+    // Count EN_COURS tickets for agency today
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.agency.id = :agencyId AND t.status = 'EN_COURS' AND DATE(t.issuedAt) = CURRENT_DATE")
+    int countEnCoursTodayByAgency(@Param("agencyId") Long agencyId);
+
+    // Count ANNULE tickets for agency today
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.agency.id = :agencyId AND t.status = 'ANNULE' AND DATE(t.issuedAt) = CURRENT_DATE")
+    int countAnnuleTodayByAgency(@Param("agencyId") Long agencyId);
+
+    // Count TERMINE tickets for agency today
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.agency.id = :agencyId AND t.status = 'TERMINE' AND DATE(t.issuedAt) = CURRENT_DATE")
+    int countTermineTodayByAgency(@Param("agencyId") Long agencyId);
 
 }

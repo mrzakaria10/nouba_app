@@ -1,11 +1,13 @@
 package com.nouba.app.services;
 
+import com.nouba.app.dto.TicketDTO;
 import com.nouba.app.dto.TicketReservationDTO;
 import com.nouba.app.entities.*;
 import com.nouba.app.exceptions.TicketNotFoundException;
 import com.nouba.app.repositories.AgencyRepository;
 import com.nouba.app.repositories.ServiceRepository;
 import com.nouba.app.repositories.TicketRepository;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -377,4 +379,81 @@ public class TicketService {
     public int countPendingTicketsByAgency(Long agencyId) {
         return ticketRepository.countPendingByAgencyId(agencyId);
     }
+
+    // Add to TicketService.java
+    @Transactional
+    public void deleteAllTicketsDaily() {
+        logger.info("Executing daily ticket table reset at {}", LocalDateTime.now());
+
+        // Delete all tickets regardless of status
+        ticketRepository.deleteAllTickets();
+
+        logger.info("All tickets (EN_ATTENTE, EN_COURS, ANNULE, TERMINE) have been deleted");
+    }
+
+    // Add to TicketService.java
+    @Scheduled(cron = "0 0 7 * * ?", zone = "Your/Timezone") // e.g., "Europe/Paris"
+    public void scheduledTicketTableReset() throws MessagingException {
+        try {
+            deleteAllTicketsDaily();
+
+            // Optional: Send notification email
+            emailService.sendEmail(
+                    "admin@example.com",
+                    "Daily Ticket Reset Completed",
+                    "All tickets were deleted at " + LocalDateTime.now()
+            );
+
+        } catch (Exception e) {
+            logger.error("Error during daily ticket table reset", e);
+            emailService.sendEmail(
+                    "admin@example.com",
+                    "Ticket Reset Failed",
+                    "Error during reset: " + e.getMessage()
+            );
+        }
+    }
+
+    // In TicketService.java
+
+    // Backup tickets before deletion
+    @Transactional
+    public List<Ticket> backupTickets() {
+        List<Ticket> allTickets = ticketRepository.findAll();
+        // In a real implementation, you would save to a backup table or file
+        return allTickets;
+    }
+
+    // Restore tickets from backup (example implementation)
+    @Transactional
+    public void restoreTickets(List<Ticket> tickets) {
+        ticketRepository.saveAll(tickets);
+    }
+
+    // Add to TicketService.java
+    public List<TicketDTO> getAgencyTicketHistory(Long agencyId) {
+        List<Ticket> tickets = ticketRepository.findAllByAgencyId(agencyId);
+        return tickets.stream()
+                .map(TicketDTO::from)
+                .toList();
+    }
+
+    // Add to TicketService.java
+
+    public int getEnAttenteCountToday(Long agencyId) {
+        return ticketRepository.countEnAttenteTodayByAgency(agencyId);
+    }
+
+    public int getEnCoursCountToday(Long agencyId) {
+        return ticketRepository.countEnCoursTodayByAgency(agencyId);
+    }
+
+    public int getAnnuleCountToday(Long agencyId) {
+        return ticketRepository.countAnnuleTodayByAgency(agencyId);
+    }
+
+    public int getTermineCountToday(Long agencyId) {
+        return ticketRepository.countTermineTodayByAgency(agencyId);
+    }
+
 }
