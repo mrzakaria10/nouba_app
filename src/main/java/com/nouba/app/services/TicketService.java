@@ -2,16 +2,17 @@ package com.nouba.app.services;
 
 import com.nouba.app.dto.TicketReservationDTO;
 import com.nouba.app.entities.*;
+import com.nouba.app.entities.AgencyService;
 import com.nouba.app.exceptions.TicketNotFoundException;
 import com.nouba.app.repositories.AgencyRepository;
+import com.nouba.app.repositories.ServiceRepository;
 import com.nouba.app.repositories.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -19,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@Service
+@Service  // Added parentheses
 @RequiredArgsConstructor
 public class TicketService {
     private static final Logger logger = LoggerFactory.getLogger(TicketService.class);
@@ -27,6 +28,9 @@ public class TicketService {
     private final AgencyRepository agencyRepository;
     private final TicketRepository ticketRepository;
     private final EmailService emailService;
+    private final ServiceRepository serviceRepository;
+
+
 
     /**
      * Generate a new ticket for an agency and client
@@ -38,28 +42,70 @@ public class TicketService {
      * @return Created ticket / Ticket créé / التذكرة المنشأة
      */
     @Transactional
-    public Ticket generateTicket(Long agencyId, Long clientId, Client client) {
+    public Ticket generateTicket(Long agencyId, Long serviceId, Long clientId, Client client) {
         Agency agency = agencyRepository.findById(agencyId)
                 .orElseThrow(() -> new RuntimeException("Agency not found"));
 
-        // Verify client exists and matches the provided ID
-       /** if (!client.getId().equals(clientId)) {
-            throw new RuntimeException("Client ID mismatch");
-        }*/
+        AgencyService service = serviceRepository.findByIdAndAgenciesId(serviceId, agencyId)
+                .orElseThrow(() -> new RuntimeException("AgencyService not available for this agency"));
 
         Integer lastSequence = ticketRepository.findMaxSequenceByAgency(agencyId)
                 .orElse(0);
 
         Ticket ticket = new Ticket();
         ticket.setAgency(agency);
+        ticket.setAgencyService(service);  // Set the agencyService
         ticket.setClient(client);
         ticket.setNumber(Ticket.generateTicketNumber(lastSequence + 1));
         ticket.setIssuedAt(LocalDateTime.now());
         ticket.setStatus(Ticket.TicketStatus.EN_ATTENTE);
 
-        return ticketRepository.save(ticket);
+        Ticket savedTicket = ticketRepository.save(ticket);
+        sendTicketNotification(savedTicket);  // Send notification
+        return savedTicket;
     }
 
+    private void sendCancellationNotification(Ticket ticket) {
+        try {
+            Map<String, String> values = new HashMap<>();
+            values.put("clientName", ticket.getClient().getUser().getName());
+            values.put("ticketNumber", ticket.getNumber());
+            values.put("agencyName", ticket.getAgency().getName());
+
+            String content = emailService.loadEmailTemplate("templates.email/ticket-cancellation.html", values);
+            emailService.sendEmail(
+                    ticket.getClient().getUser().getEmail(),
+                    "Ticket cancellation confirmation",
+                    content
+            );
+        } catch (Exception e) {
+            logger.error("Error sending cancellation notification", e);
+        }
+    }
+
+    @Transactional
+    public void cancelTicket(Long ticketId, User user) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+        // Authorization checks
+        if (user.getRole() == Role.CLIENT &&
+                !ticket.getClient().getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized to cancel this ticket");
+        }
+
+        if (user.getRole() == Role.AGENCY) {
+            Agency agency = agencyRepository.findByUser(user)
+                    .orElseThrow(() -> new RuntimeException("Agency not found"));
+            if (!ticket.getAgency().getId().equals(agency.getId())) {
+                throw new RuntimeException("Unauthorized to cancel this ticket");
+            }
+        }
+
+        ticket.cancel();
+        ticketRepository.save(ticket);
+        sendCancellationNotification(ticket);
+    }
     /**
      * Get number of people ahead in queue
      * Obtenir le nombre de personnes devant dans la file d'attente
@@ -91,7 +137,7 @@ public class TicketService {
      */
     @Transactional
     public Optional<Ticket> serveNextClient(Long agencyId) {
-        // Complete current serving ticket if exists / Compléter le ticket en cours de service s'il existe / إكمال التذكرة الحالية إذا كانت موجودة
+        // Complete current serving ticket if exists / Compléter le ticket en cours de agencyService s'il existe / إكمال التذكرة الحالية إذا كانت موجودة
         ticketRepository.findCurrentlyServingByAgencyId(agencyId)
                 .ifPresent(ticket -> {
                     ticket.completeProcessing();
@@ -153,7 +199,7 @@ public class TicketService {
 
     /**
      * Get current ticket being served
-     * Obtenir le ticket actuellement en cours de service
+     * Obtenir le ticket actuellement en cours de agencyService
      * الحصول على التذكرة قيد الخدمة حالياً
      *
      * @param agencyId Agency ID / ID de l'agence / معرّف الوكالة
@@ -185,8 +231,8 @@ public class TicketService {
      * @return Created ticket / Ticket créé / التذكرة المنشأة
      */
     @Transactional
-    public Ticket createTicketWithStatusPending(Long agencyId, Client client) {
-        Ticket ticket = generateTicket(agencyId, agencyId, client);
+    public Ticket createTicketWithStatusPending(Long agencyId, Long serviceId, Long clientId, Client client) {
+        Ticket ticket = generateTicket(agencyId, serviceId, clientId, client);
         sendTicketNotification(ticket);
         return ticket;
     }

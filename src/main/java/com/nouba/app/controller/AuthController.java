@@ -17,9 +17,9 @@ public class AuthController {
     // Injection des dépendances via le constructeur.
     // Chaque service est injecté par Spring pour éviter de les créer manuellement, ce qui favorise l'inversion de contrôle (IoC).
 
-    private final AuthService authService; // Service qui gère l'authentification (login, registration, activation, etc.)
+    private final AuthService authService; // AgencyService qui gère l'authentification (login, registration, activation, etc.)
     private final CityRepository cityRepository; // Référentiel pour interagir avec la base de données des utilisateurs.
-    private final EmailService emailService; // Service pour l'envoi d'e-mails, utilisé pour envoyer des liens d'activation et de réinitialisation de mot de passe.
+    private final EmailService emailService; // AgencyService pour l'envoi d'e-mails, utilisé pour envoyer des liens d'activation et de réinitialisation de mot de passe.
     private final PasswordEncoder passwordEncoder; // Encodage du mot de passe pour le stockage sécurisé des mots de passe des utilisateurs.
 
     // Constructeur avec injection des dépendances.

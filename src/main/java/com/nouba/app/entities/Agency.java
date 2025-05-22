@@ -4,21 +4,19 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.List;
+import java.util.Set;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Agency {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
-    private String photoUrl; // Added back for photo storage
+    private String photoUrl;
     private String address;
     private String phone;
 
@@ -27,12 +25,19 @@ public class Agency {
     @JsonIgnoreProperties("agencies")
     private City city;
 
-    @OneToOne (cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
+    @ManyToMany
+    @JoinTable(
+            name = "agencyService",
+            joinColumns = @JoinColumn(name = "agency_id"),
+            inverseJoinColumns = @JoinColumn(name = "service_id")
+    )
+    private Set<AgencyService> services;
 
     @OneToMany(mappedBy = "agency")
     @JsonIgnore
-    private List<Ticket> tickets;
+    private Set<Ticket> tickets;
 }

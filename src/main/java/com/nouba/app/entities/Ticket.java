@@ -15,11 +15,19 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Ticket {
 
+    // Add to Ticket class
+    @ManyToOne
+    @JoinColumn(name = "service_id")
+    private AgencyService agencyService;
+
+    // Update enum
     public enum TicketStatus {
-        EN_ATTENTE,  // Waiting / في انتظار
-        EN_COURS,    // In progress / قيد المعالجة
-        TERMINE      // Completed / مكتمل
+        EN_ATTENTE,
+        EN_COURS,
+        TERMINE,
+        ANNULE
     }
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,6 +63,8 @@ public class Ticket {
     @JsonIgnoreProperties("tickets")
     private Agency agency;
 
+
+
     /**
      * Génère un numéro de ticket formaté / يقوم بإنشاء رقم تذكرة منسق
      * @param sequence Le numéro séquentiel / الرقم التسلسلي
@@ -73,6 +83,15 @@ public class Ticket {
     // Method to update status to "terminé" / طريقة لتحديث الحالة إلى "مكتمل"
     public void completeProcessing() {
         this.status = TicketStatus.TERMINE;
+        this.completedAt = LocalDateTime.now();
+    }
+
+    // Add cancel method
+    public void cancel() {
+        if (this.status != TicketStatus.EN_ATTENTE) {
+            throw new IllegalStateException("Only pending tickets can be cancelled");
+        }
+        this.status = TicketStatus.ANNULE;
         this.completedAt = LocalDateTime.now();
     }
     /**

@@ -1,13 +1,11 @@
 package com.nouba.app.controller;
 
-import com.nouba.app.dto.ApiResponse;
-import com.nouba.app.dto.TicketDTO;
-import com.nouba.app.dto.TicketReservationDTO;
+import com.nouba.app.dto.*;
 import com.nouba.app.entities.*;
 import com.nouba.app.repositories.ClientRepository;
+import com.nouba.app.repositories.ServiceRepository;
 import com.nouba.app.services.TicketService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,33 +24,40 @@ public class TicketController {
 
     private final TicketService ticketService;
     private final ClientRepository clientRepository;
+    private final ServiceRepository serviceRepository;
 
     /**
-     * Create a new ticket for an agency / إنشاء تذكرة جديدة لوكالة
-     * @param agencyId ID of the agency / معرّف الوكالة
-     * @param user Authenticated user / المستخدم المصادق عليه
-     * @return ResponseEntity containing the created ticket / كيان الاستجابة يحتوي على التذكرة المنشأة
+     * Create a new ticket for an agency with service selection
      */
-    @PostMapping("/agency/{agencyId}/{clientId}")
+    @PostMapping("/agency/{agencyId}/{clientId}/{serviceId}")
+    @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<ApiResponse<TicketDTO>> takeTicket(
             @PathVariable Long agencyId,
             @PathVariable Long clientId,
+            @PathVariable Long serviceId,
             @AuthenticationPrincipal User user) {
 
-
-
+        // Verify client matches authenticated user
+        if(!clientId.equals(user.getId())) {
+            throw new RuntimeException("Client ID doesn't match authenticated user");
+        }
 
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
 
+        // Pass all 4 required parameters
+        Ticket ticket = ticketService.generateTicket(
+                agencyId,
+                serviceId,
+                client.getId(),  // clientId as separate parameter
+                client);         // client object
 
-
-        Ticket ticket = ticketService.generateTicket(agencyId, clientId, client);
         return ResponseEntity.ok(
                 new ApiResponse<>(TicketDTO.from(ticket),
                         "Ticket created successfully",
                         200));
     }
+
 
     /**
      * Get the status of a specific ticket / الحصول على حالة تذكرة محددة
@@ -197,6 +202,38 @@ public class TicketController {
         return ResponseEntity.ok(
                 new ApiResponse<>(count,
                         "Pending tickets count retrieved successfully",
+                        200));
+    }
+
+
+    /**
+     * Get services by agency (for client selection)
+     */
+    @GetMapping("/agency/{agencyId}/services")
+    public ResponseEntity<ApiResponse<List<ServiceDTO>>> getAgencyServices(
+            @PathVariable Long agencyId) {
+        List<AgencyService> agencyServices = serviceRepository.findByAgenciesId(agencyId);
+        List<ServiceDTO> dtos = agencyServices.stream()
+                .map(s -> new ServiceDTO(s.getId(), s.getName(), s.getDescription()))
+                .toList();
+        return ResponseEntity.ok(new ApiResponse<>(dtos, "Services retrieved", 200));
+    }
+
+
+
+    /**
+     * Cancel ticket
+     */
+    @PutMapping("/{ticketId}/cancel")
+    @PreAuthorize("hasAnyRole('CLIENT', 'AGENCY')")
+    public ResponseEntity<ApiResponse<String>> cancelTicket(
+            @PathVariable Long ticketId,
+            @AuthenticationPrincipal User user) {
+
+        ticketService.cancelTicket(ticketId, user);
+        return ResponseEntity.ok(
+                new ApiResponse<>(null,
+                        "Ticket cancelled successfully",
                         200));
     }
 }

@@ -4,6 +4,7 @@ import com.nouba.app.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -58,6 +59,10 @@ public class SecurityConfig {
 
                         // Explicitly secure ticket endpoints
                         .requestMatchers("/tickets/**").authenticated()
+
+                        .requestMatchers(HttpMethod.GET, "/tickets/agency/*/services").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/tickets").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.PUT, "/tickets/*/cancel").hasAnyRole("CLIENT", "AGENCY")
 
                         // Add to requestMatchers in SecurityConfig.java
                         .requestMatchers("/users/active-this-week").hasRole("ADMIN")
