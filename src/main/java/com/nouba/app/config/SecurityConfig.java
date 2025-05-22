@@ -8,6 +8,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -23,6 +24,7 @@ import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -45,42 +47,23 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors ->{})
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Permettre l'accès sans authentification
                         .requestMatchers("/auth/**").permitAll()
-
-                        // Endpoints admin - réservés aux ADMIN
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
-
-                        // Configuration des endpoints API avec restrictions de rôle
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/admin/agencies").permitAll()
+                        .requestMatchers("/tickets/**").hasAnyRole("CLIENT")
 
-                        // Explicitly secure ticket endpoints
-                        .requestMatchers("/tickets/**").authenticated()
-
-                        .requestMatchers(HttpMethod.GET, "/tickets/agency/*/services").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/tickets").hasRole("CLIENT")
-                        .requestMatchers(HttpMethod.PUT, "/tickets/*/cancel").hasAnyRole("CLIENT", "AGENCY")
-
-                        // Add to requestMatchers in SecurityConfig.java
                         .requestMatchers("/users/active-this-week").hasRole("ADMIN")
-
-                        //public
                         .requestMatchers("/public/tickets/**").permitAll()
-
                         .requestMatchers("/tickets/admin/**").hasRole("ADMIN")
-
                         .requestMatchers("/tickets/**").hasAnyRole("AGENCY")
-
                         .requestMatchers("/users").hasRole("ADMIN")
                         .requestMatchers("/users/role/**").hasAnyRole("ADMIN", "AGENCY", "CLIENT")
                         .requestMatchers("/users/**").hasRole("ADMIN")
                         .requestMatchers("/agencies/*/stats").hasAnyRole("ADMIN", "AGENCY")
-
-
-                        // Toutes les autres requêtes nécessitent une authentification
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -92,7 +75,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:4200"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

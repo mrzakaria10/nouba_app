@@ -6,10 +6,12 @@ import com.nouba.app.repositories.ClientRepository;
 import com.nouba.app.repositories.ServiceRepository;
 import com.nouba.app.services.TicketService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,27 +39,30 @@ public class TicketController {
             @PathVariable Long serviceId,
             @AuthenticationPrincipal User user) {
 
-        // Verify client matches authenticated user
-        if(!clientId.equals(user.getId())) {
-            throw new RuntimeException("Client ID doesn't match authenticated user");
+        try {
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse<>(null, "Authentication required", 401));
+            }
+
+            if (!clientId.equals(user.getClient().getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse<>(null, "Client ID doesn't match authenticated user", 403));
+            }
+
+            Client client = clientRepository.findById(clientId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
+
+            Ticket ticket = ticketService.generateTicket(agencyId, serviceId, client.getId(), client);
+
+            return ResponseEntity.ok(
+                    new ApiResponse<>(TicketDTO.from(ticket), "Ticket created successfully", 200));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(null, "Error creating ticket: " + e.getMessage(), 500));
         }
-
-        Client client = clientRepository.findById(clientId)
-                .orElseThrow(() -> new RuntimeException("Client not found"));
-
-        // Pass all 4 required parameters
-        Ticket ticket = ticketService.generateTicket(
-                agencyId,
-                serviceId,
-                client.getId(),  // clientId as separate parameter
-                client);         // client object
-
-        return ResponseEntity.ok(
-                new ApiResponse<>(TicketDTO.from(ticket),
-                        "Ticket created successfully",
-                        200));
     }
-
 
     /**
      * Get the status of a specific ticket / الحصول على حالة تذكرة محددة
@@ -212,7 +217,7 @@ public class TicketController {
     @GetMapping("/agency/{agencyId}/services")
     public ResponseEntity<ApiResponse<List<ServiceDTO>>> getAgencyServices(
             @PathVariable Long agencyId) {
-        List<AgencyService> agencyServices = serviceRepository.findByAgenciesId(agencyId);
+        List<Servicee> agencyServices = serviceRepository.findByAgenciesId(agencyId);
         List<ServiceDTO> dtos = agencyServices.stream()
                 .map(s -> new ServiceDTO(s.getId(), s.getName(), s.getDescription()))
                 .toList();

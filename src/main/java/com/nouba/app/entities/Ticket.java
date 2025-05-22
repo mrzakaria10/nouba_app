@@ -18,7 +18,7 @@ public class Ticket {
     // Add to Ticket class
     @ManyToOne
     @JoinColumn(name = "service_id")
-    private AgencyService agencyService;
+    private Servicee agencyService;
 
     // Update enum
     public enum TicketStatus {

@@ -2,7 +2,6 @@ package com.nouba.app.services;
 
 import com.nouba.app.dto.TicketReservationDTO;
 import com.nouba.app.entities.*;
-import com.nouba.app.entities.AgencyService;
 import com.nouba.app.exceptions.TicketNotFoundException;
 import com.nouba.app.repositories.AgencyRepository;
 import com.nouba.app.repositories.ServiceRepository;
@@ -19,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.nouba.app.entities.Servicee;
 
 @Service  // Added parentheses
 @RequiredArgsConstructor
@@ -46,7 +46,7 @@ public class TicketService {
         Agency agency = agencyRepository.findById(agencyId)
                 .orElseThrow(() -> new RuntimeException("Agency not found"));
 
-        AgencyService service = serviceRepository.findByIdAndAgenciesId(serviceId, agencyId)
+        Servicee service = serviceRepository.findByIdAndAgenciesId(serviceId, agencyId)
                 .orElseThrow(() -> new RuntimeException("AgencyService not available for this agency"));
 
         Integer lastSequence = ticketRepository.findMaxSequenceByAgency(agencyId)

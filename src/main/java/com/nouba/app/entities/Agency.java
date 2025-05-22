@@ -29,13 +29,7 @@ public class Agency {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @ManyToMany
-    @JoinTable(
-            name = "agencyService",
-            joinColumns = @JoinColumn(name = "agency_id"),
-            inverseJoinColumns = @JoinColumn(name = "service_id")
-    )
-    private Set<AgencyService> services;
+
 
     @OneToMany(mappedBy = "agency")
     @JsonIgnore
