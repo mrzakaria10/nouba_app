@@ -1,16 +1,17 @@
 package com.nouba.app.services;
 
-import com.nouba.app.dto.TicketDTO;
-import com.nouba.app.dto.TicketReservationDTO;
+import com.nouba.app.dto.*;
 import com.nouba.app.entities.*;
 import com.nouba.app.exceptions.TicketNotFoundException;
 import com.nouba.app.repositories.AgencyRepository;
+import com.nouba.app.repositories.ClientRepository;
 import com.nouba.app.repositories.ServiceRepository;
 import com.nouba.app.repositories.TicketRepository;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 import com.nouba.app.entities.Servicee;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service  // Added parentheses
 @RequiredArgsConstructor
@@ -31,6 +35,7 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final EmailService emailService;
     private final ServiceRepository serviceRepository;
+    private final ClientRepository clientRepository;
 
 
 
@@ -456,4 +461,141 @@ public class TicketService {
         return ticketRepository.countTermineTodayByAgency(agencyId);
     }
 
+    // 1. Get all tickets by agency
+    public List<TicketAgencyDto> getAllTicketsByAgency(Long agencyId) {
+        return ticketRepository.findByAgencyId(agencyId).stream()
+                .map(ticket -> new TicketAgencyDto(
+                        ticket.getNumber(),
+                        ticket.getAgency().getName(),
+                        ticket.getIssuedAt(),
+                        calculatePosition(ticket),
+                        calculateWaitTime(ticket),
+                        ticket.getStatus().name()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    // 2. Start service (EN_ATTENTE → EN_COURS)
+    public TicketServiceDto startTicketService(Long ticketId, Long agencyId) {
+        Ticket ticket = ticketRepository.findByIdAndAgencyId(ticketId, agencyId)
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
+
+        if (!ticket.getStatus().equals(Ticket.TicketStatus.EN_ATTENTE)) {
+            throw new IllegalStateException("Ticket must be in EN_ATTENTE status");
+        }
+
+        ticket.startProcessing();
+        ticket = ticketRepository.save(ticket);
+
+        return new TicketServiceDto(
+                ticket.getNumber(),
+                ticket.getAgency().getName(),
+                ticket.getIssuedAt(),
+                ticket.getClient().getUser().getName()
+        );
+    }
+
+    // 3. Cancel pending ticket (EN_ATTENTE → ANNULE)
+    public TicketCancelDto cancelPendingTicket(Long ticketId, User user) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
+
+        // Verify authorization
+        if (user.getRole().equals(Role.CLIENT)) {  // Added missing parenthesis
+            if (!ticket.getClient().getUser().getId().equals(user.getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized");
+            }
+        } else if (user.getRole().equals(Role.AGENCY)) {  // Added missing parenthesis
+            if (!ticket.getAgency().getId().equals(user.getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized");
+            }
+        }
+
+        if (!ticket.getStatus().equals(Ticket.TicketStatus.EN_ATTENTE)) {
+            throw new IllegalStateException("Ticket must be in EN_ATTENTE status");
+        }
+
+        ticket.setStatus(Ticket.TicketStatus.ANNULE);
+        ticket = ticketRepository.save(ticket);
+
+        return new TicketCancelDto(
+                ticket.getClient().getUser().getName(),
+                ticket.getNumber()
+        );
+    }
+
+    // 4. Complete service (EN_COURS → TERMINE)
+    public TicketCompleteDto completeTicketService(Long ticketId, Long agencyId) {
+        Ticket ticket = ticketRepository.findByIdAndAgencyId(ticketId, agencyId)
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
+
+        if (!ticket.getStatus().equals(Ticket.TicketStatus.EN_COURS)) {
+            throw new IllegalStateException("Ticket must be in EN_COURS status");
+        }
+
+        ticket.completeProcessing();
+        ticket = ticketRepository.save(ticket);
+
+        return new TicketCompleteDto(
+                ticket.getNumber(),
+                ticket.getAgency().getName(),
+                ticket.getClient().getUser().getName()
+        );
+    }
+
+    // 5. Cancel active ticket (EN_COURS → ANNULE)
+    public TicketCancelDto cancelActiveTicket(Long ticketId, Long agencyId) {
+        Ticket ticket = ticketRepository.findByIdAndAgencyId(ticketId, agencyId)
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
+
+        if (!ticket.getStatus().equals(Ticket.TicketStatus.EN_COURS)) {
+            throw new IllegalStateException("Ticket must be in EN_COURS status");
+        }
+
+        ticket.setStatus(Ticket.TicketStatus.ANNULE);
+        ticket = ticketRepository.save(ticket);
+
+        return new TicketCancelDto(
+                ticket.getClient().getUser().getName(),
+                ticket.getNumber()
+        );
+    }
+
+    // 6. Get all clients for agency
+    public List<ClientDto> getAgencyClients(Long agencyId) {
+        // Option 1: Using JPQL query
+        return clientRepository.findClientsByAgencyId(agencyId).stream()
+                .map(client -> new ClientDto(
+                        client.getUser().getName(),
+                        client.getUser().getEmail(),
+                        client.getUser().getPhone()
+                ))
+                .collect(Collectors.toList());
+
+        // Option 2: Alternative implementation
+        // return ticketRepository.findByAgencyId(agencyId).stream()
+        //         .map(Ticket::getClient)
+        //         .distinct()
+        //         .map(client -> new ClientDto(
+        //                 client.getUser().getName(),
+        //                 client.getUser().getEmail(),
+        //                 client.getUser().getPhone()
+        //         ))
+        //         .collect(Collectors.toList());
+    }
+
+    // Helper methods
+    private int calculatePosition(Ticket ticket) {
+        return ticketRepository.countByAgencyIdAndSequenceLessThanAndPending(
+                ticket.getAgency().getId(),
+                Integer.parseInt(ticket.getNumber().substring(5))
+                        + 1);
+    }
+
+    private String calculateWaitTime(Ticket ticket) {
+        int position = calculatePosition(ticket);
+        int minutes = position * 5; // 5 minutes per person
+        return minutes < 60 ? minutes + " minutes" :
+                (minutes / 60) + " hours " + (minutes % 60) + " minutes";
+    }
 }

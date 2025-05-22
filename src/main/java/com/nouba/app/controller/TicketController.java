@@ -378,4 +378,97 @@ public class TicketController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized to access this agency's data");
         }
     }
+
+    /**
+     * 1. Get all tickets with all statuses by agency ID (Role: AGENCY)
+     * Returns: ticket number, service, creation date, position, estimated time, status
+     */
+    @GetMapping("/agency/{agencyId}/all")
+    public ResponseEntity<ApiResponse<List<TicketAgencyDto>>> getAllTicketsByAgency(
+            @PathVariable Long agencyId,
+            @AuthenticationPrincipal User user) {
+
+        // Verify user has AGENCY role and owns this agency
+        if (!user.getRole().equals(Role.AGENCY) || !user.getId().equals(agencyId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized access");
+        }
+
+        List<TicketAgencyDto> tickets = ticketService.getAllTicketsByAgency(agencyId);
+        return ResponseEntity.ok(
+                new ApiResponse<>(tickets, "All tickets retrieved", 200));
+    }
+
+    /**
+     * 2. Change status from EN_ATTENTE to EN_COURS (Role: AGENCY)
+     * Returns: ticket number, service, creation date, client name
+     */
+    @PutMapping("/{ticketId}/start-service")
+    public ResponseEntity<ApiResponse<TicketServiceDto>> startTicketService(
+            @PathVariable Long ticketId,
+            @AuthenticationPrincipal User user) {
+
+        TicketServiceDto response = ticketService.startTicketService(ticketId, user.getId());
+        return ResponseEntity.ok(
+                new ApiResponse<>(response, "Service started", 200));
+    }
+
+    /**
+     * 3. Change status from EN_ATTENTE to ANNULE (Role: AGENCY or CLIENT)
+     * Returns: client name, ticket number
+     */
+    @PutMapping("/{ticketId}/cancel-pending")
+    public ResponseEntity<ApiResponse<TicketCancelDto>> cancelPendingTicket(
+            @PathVariable Long ticketId,
+            @AuthenticationPrincipal User user) {
+
+        TicketCancelDto response = ticketService.cancelPendingTicket(ticketId, user);
+        return ResponseEntity.ok(
+                new ApiResponse<>(response, "Pending ticket canceled", 200));
+    }
+
+    /**
+     * 4. Change status from EN_COURS to TERMINE (Role: AGENCY)
+     * Returns: ticket number, service, client name
+     */
+    @PutMapping("/{ticketId}/complete-service")
+    public ResponseEntity<ApiResponse<TicketCompleteDto>> completeTicketService(
+            @PathVariable Long ticketId,
+            @AuthenticationPrincipal User user) {
+
+        TicketCompleteDto response = ticketService.completeTicketService(ticketId, user.getId());
+        return ResponseEntity.ok(
+                new ApiResponse<>(response, "Service completed", 200));
+    }
+
+    /**
+     * 5. Change status from EN_COURS to ANNULE (Role: AGENCY)
+     * Returns: client name, ticket number
+     */
+    @PutMapping("/{ticketId}/cancel-active")
+    public ResponseEntity<ApiResponse<TicketCancelDto>> cancelActiveTicket(
+            @PathVariable Long ticketId,
+            @AuthenticationPrincipal User user) {
+
+        TicketCancelDto response = ticketService.cancelActiveTicket(ticketId, user.getId());
+        return ResponseEntity.ok(
+                new ApiResponse<>(response, "Active ticket canceled", 200));
+    }
+
+    /**
+     * 6. Get all clients for an agency (Role: AGENCY)
+     */
+    @GetMapping("/agency/{agencyId}/clients")
+    public ResponseEntity<ApiResponse<List<ClientDto>>> getAgencyClients(
+            @PathVariable Long agencyId,
+            @AuthenticationPrincipal User user) {
+
+        // Verify user has AGENCY role and owns this agency
+        if (!user.getRole().equals(Role.AGENCY) || !user.getId().equals(agencyId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized access");
+        }
+
+        List<ClientDto> clients = ticketService.getAgencyClients(agencyId);
+        return ResponseEntity.ok(
+                new ApiResponse<>(clients, "Agency clients retrieved", 200));
+    }
 }

@@ -56,6 +56,15 @@ public class SecurityConfig {
                         .requestMatchers("/admin/agencies").permitAll()
                         .requestMatchers("/tickets/**").hasAnyRole("CLIENT")
 
+                        // Agency-specific endpoints
+                        .requestMatchers("/tickets/agency/**").hasRole("AGENCY")
+                        // Ticket status change endpoints
+                        .requestMatchers(HttpMethod.PUT, "/tickets/**/start-service").hasRole("AGENCY")
+                        .requestMatchers(HttpMethod.PUT, "/tickets/**/complete-service").hasRole("AGENCY")
+                        .requestMatchers(HttpMethod.PUT, "/tickets/**/cancel-active").hasRole("AGENCY")
+                        // Cancel pending can be done by agency or client
+                        .requestMatchers(HttpMethod.PUT, "/tickets/**/cancel-pending").hasAnyRole("AGENCY", "CLIENT")
+
                         .requestMatchers("/users/active-this-week").hasRole("ADMIN")
                         .requestMatchers("/public/tickets/**").permitAll()
                         .requestMatchers("/tickets/admin/**").hasRole("ADMIN")
@@ -65,6 +74,8 @@ public class SecurityConfig {
                         .requestMatchers("/users/**").hasRole("ADMIN")
                         .requestMatchers("/agencies/*/stats").hasAnyRole("ADMIN", "AGENCY")
                         .anyRequest().authenticated()
+
+
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

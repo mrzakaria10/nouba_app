@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ClientRepository extends JpaRepository<Client, Long> {
@@ -17,4 +18,10 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
 
     @Query("SELECT COUNT(DISTINCT c) FROM Client c JOIN c.tickets t WHERE t.agency.id = :agencyId")
     int countDistinctByTicketsAgencyId(@Param("agencyId") Long agencyId);
+
+    @Query("SELECT DISTINCT t.client FROM Ticket t WHERE t.agency.id = :agencyId")
+    List<Client> findClientsByAgencyId(@Param("agencyId") Long agencyId);
+
+
+
 }

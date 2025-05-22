@@ -1,5 +1,6 @@
 package com.nouba.app.repositories;
 
+import com.nouba.app.entities.Client;
 import com.nouba.app.entities.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -144,4 +145,16 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     @Query("SELECT COUNT(t) FROM Ticket t WHERE t.agency.id = :agencyId AND t.status = 'TERMINE' AND DATE(t.issuedAt) = CURRENT_DATE")
     int countTermineTodayByAgency(@Param("agencyId") Long agencyId);
 
-}
+
+
+        // For endpoint 1
+        List<Ticket> findByAgencyId(Long agencyId);
+
+        // For endpoints 2, 4, 5
+        Optional<Ticket> findByIdAndAgencyId(Long ticketId, Long agencyId);
+
+        // For endpoint 6
+        @Query("SELECT DISTINCT t.client FROM Ticket t WHERE t.agency.id = :agencyId")
+        List<Client> findClientsByAgencyId(@Param("agencyId") Long agencyId);
+    }
+
