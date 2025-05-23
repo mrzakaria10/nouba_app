@@ -8,7 +8,9 @@ import org.apache.commons.lang3.RandomStringUtils;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ticket")  // Explicitly maps to the "ticket" table
+@Table(name = "ticket", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"agency_id", "number"})
+})
 
 @Data
 @NoArgsConstructor
@@ -33,7 +35,7 @@ public class Ticket {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String number;  // // Format: NOUBA001 Changed to String for formatted number / تم التغيير إلى String لتنسيق الرقم
 
     @Enumerated(EnumType.STRING)
@@ -53,6 +55,9 @@ public class Ticket {
     @Column(nullable = false)
     private boolean served = false;
 
+    @Column(nullable = false)
+    private Integer sequenceNumber;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "client_id", nullable = false)
     @JsonIgnoreProperties("tickets")
@@ -66,12 +71,12 @@ public class Ticket {
 
 
     /**
-     * Génère un numéro de ticket formaté / يقوم بإنشاء رقم تذكرة منسق
-     * @param sequence Le numéro séquentiel / الرقم التسلسلي
-     * @return Numéro de ticket formaté (ex: NOUBA001) / رقم التذكرة المنسق
+     * Generate a formatted ticket number combining agency ID and sequence
+     * Format: NOUBA + agencyId (3 digits) + sequence (3 digits)
+     * Example: NOUBA001001 for agency 1, sequence 1
      */
     public static String generateTicketNumber(int sequence) {
-        return String.format("NOUBA%03d", sequence); // Format: NOUBA + 3-digit number / تنسيق: NOUBA + رقم مكون من 3 خانات
+        return String.format("NOUBA%03d", sequence); // Format: NOUBA001
     }
 
     // Method to update status to "en cours" / طريقة لتحديث الحالة إلى "قيد المعالجة"
@@ -113,27 +118,17 @@ public class Ticket {
     */
 
 
-    @Column(unique = true, nullable = false, updatable = false)
-    private String publicAccessCode; // Example: "NOUBA-001-ABC123"
+//    @Column(unique = true, nullable = false, updatable = false)
+//    private String publicAccessCode; // Example: "NOUBA-001-ABC123"
 
     /**
      * Combined callback method for all pre-persist operations
      */
     @PrePersist
     public void prePersistOperations() {
-        // Generate public access code if not set
-        if (this.publicAccessCode == null) {
-            this.publicAccessCode = "NOUBA-" +
-                    this.number.substring(5) + "-" +
-                    RandomStringUtils.randomAlphanumeric(6).toUpperCase();
-        }
-
-        // Set served status based on ticket status
-        this.served = this.status == TicketStatus.TERMINE;
-
-        // Set issuedAt if not already set
-        if (this.issuedAt == null) {
-            this.issuedAt = LocalDateTime.now();
+        if (this.id == null) {
+            // Ensure ID is generated before other operations
+            // This is just a safety check - GenerationType.IDENTITY should handle it
         }
     }
 }

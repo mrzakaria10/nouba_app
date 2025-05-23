@@ -28,4 +28,7 @@ public interface AgencyRepository extends JpaRepository<Agency, Long> {
     List<Agency> findActiveAgencies(@Param("debut") LocalDateTime debut,
                                     @Param("fin") LocalDateTime fin);
 
+    Optional<Agency> findByUserId(Long userId);
+
+    Optional<Agency> findByUser_Id(Long userId);
 }

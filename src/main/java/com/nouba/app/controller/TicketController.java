@@ -41,11 +41,14 @@ public class TicketController {
             @PathVariable Long serviceId,
             @AuthenticationPrincipal User user) {
 
+
+
         try {
-            if (user == null) {
+            if (user == null || user.getClient() == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>(null, "Authentication required", 401));
             }
+
 
             if (!clientId.equals(user.getClient().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -384,13 +387,18 @@ public class TicketController {
      * Returns: ticket number, service, creation date, position, estimated time, status
      */
     @GetMapping("/agency/{agencyId}/all")
+    @PreAuthorize("hasRole('AGENCY')")
     public ResponseEntity<ApiResponse<List<TicketAgencyDto>>> getAllTicketsByAgency(
             @PathVariable Long agencyId,
             @AuthenticationPrincipal User user) {
 
-        // Verify user has AGENCY role and owns this agency
-        if (!user.getRole().equals(Role.AGENCY) || !user.getId().equals(agencyId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized access");
+        // Get the agency associated with the user
+        Agency userAgency = agencyRepository.findByUser_Id(user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not associated with an agency"));
+
+        // Verify the requested agency matches the user's agency
+        if (!userAgency.getId().equals(agencyId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized access to this agency's data");
         }
 
         List<TicketAgencyDto> tickets = ticketService.getAllTicketsByAgency(agencyId);
@@ -403,13 +411,22 @@ public class TicketController {
      * Returns: ticket number, service, creation date, client name
      */
     @PutMapping("/{ticketId}/start-service")
+    @PreAuthorize("hasRole('AGENCY')")
     public ResponseEntity<ApiResponse<TicketServiceDto>> startTicketService(
             @PathVariable Long ticketId,
             @AuthenticationPrincipal User user) {
 
-        TicketServiceDto response = ticketService.startTicketService(ticketId, user.getId());
-        return ResponseEntity.ok(
-                new ApiResponse<>(response, "Service started", 200));
+        try {
+            TicketServiceDto response = ticketService.startTicketService(ticketId, user.getId());
+            return ResponseEntity.ok(
+                    new ApiResponse<>(response, "Service started", 200));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(new ApiResponse<>(null, e.getReason(), e.getStatusCode().value()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(null, "Error starting service: " + e.getMessage(), 500));
+        }
     }
 
     /**
@@ -417,13 +434,22 @@ public class TicketController {
      * Returns: client name, ticket number
      */
     @PutMapping("/{ticketId}/cancel-pending")
+    @PreAuthorize("hasAnyRole('AGENCY', 'CLIENT')")
     public ResponseEntity<ApiResponse<TicketCancelDto>> cancelPendingTicket(
             @PathVariable Long ticketId,
             @AuthenticationPrincipal User user) {
 
-        TicketCancelDto response = ticketService.cancelPendingTicket(ticketId, user);
-        return ResponseEntity.ok(
-                new ApiResponse<>(response, "Pending ticket canceled", 200));
+        try {
+            TicketCancelDto response = ticketService.cancelPendingTicket(ticketId, user);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(response, "Pending ticket canceled", 200));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(new ApiResponse<>(null, e.getReason(), e.getStatusCode().value()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(null, "Error canceling ticket: " + e.getMessage(), 500));
+        }
     }
 
     /**
@@ -445,26 +471,40 @@ public class TicketController {
      * Returns: client name, ticket number
      */
     @PutMapping("/{ticketId}/cancel-active")
+    @PreAuthorize("hasRole('AGENCY')")
     public ResponseEntity<ApiResponse<TicketCancelDto>> cancelActiveTicket(
             @PathVariable Long ticketId,
             @AuthenticationPrincipal User user) {
 
-        TicketCancelDto response = ticketService.cancelActiveTicket(ticketId, user.getId());
-        return ResponseEntity.ok(
-                new ApiResponse<>(response, "Active ticket canceled", 200));
+        try {
+            TicketCancelDto response = ticketService.cancelActiveTicket(ticketId, user.getId());
+            return ResponseEntity.ok(
+                    new ApiResponse<>(response, "Active ticket canceled", 200));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(new ApiResponse<>(null, e.getReason(), e.getStatusCode().value()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(null, "Error canceling ticket: " + e.getMessage(), 500));
+        }
     }
 
     /**
      * 6. Get all clients for an agency (Role: AGENCY)
      */
     @GetMapping("/agency/{agencyId}/clients")
+    @PreAuthorize("hasRole('AGENCY')")
     public ResponseEntity<ApiResponse<List<ClientDto>>> getAgencyClients(
             @PathVariable Long agencyId,
             @AuthenticationPrincipal User user) {
 
-        // Verify user has AGENCY role and owns this agency
-        if (!user.getRole().equals(Role.AGENCY) || !user.getId().equals(agencyId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized access");
+        // Get the agency associated with the user
+        Agency userAgency = agencyRepository.findByUser_Id(user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not associated with an agency"));
+
+        // Verify the requested agency matches the user's agency
+        if (!userAgency.getId().equals(agencyId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized access to this agency's data");
         }
 
         List<ClientDto> clients = ticketService.getAgencyClients(agencyId);

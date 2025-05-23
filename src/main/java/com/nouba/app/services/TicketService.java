@@ -11,6 +11,9 @@ import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,23 +57,66 @@ public class TicketService {
                 .orElseThrow(() -> new RuntimeException("Agency not found"));
 
         Servicee service = serviceRepository.findByIdAndAgenciesId(serviceId, agencyId)
-                .orElseThrow(() -> new RuntimeException("AgencyService not available for this agency"));
+                .orElseThrow(() -> new RuntimeException("Service not available for this agency"));
 
-        Integer lastSequence = ticketRepository.findMaxSequenceByAgency(agencyId)
-                .orElse(0);
+        if (!client.getId().equals(clientId)) {
+            throw new RuntimeException("Client ID mismatch");
+        }
 
-        Ticket ticket = new Ticket();
-        ticket.setAgency(agency);
-        ticket.setAgencyService(service);  // Set the agencyService
-        ticket.setClient(client);
-        ticket.setNumber(Ticket.generateTicketNumber(lastSequence + 1));
-        ticket.setIssuedAt(LocalDateTime.now());
-        ticket.setStatus(Ticket.TicketStatus.EN_ATTENTE);
+        for (int attempt = 0; attempt < 3; attempt++) {
+            Integer lastSequence = ticketRepository.findMaxSequenceByAgency(agencyId).orElse(0);
+            int nextSequence = lastSequence + 1;
 
-        Ticket savedTicket = ticketRepository.save(ticket);
-        sendTicketNotification(savedTicket);  // Send notification
-        return savedTicket;
+            Ticket ticket = new Ticket();
+            ticket.setAgency(agency);
+            ticket.setAgencyService(service);
+            ticket.setClient(client);
+            ticket.setSequenceNumber(nextSequence);
+            ticket.setNumber(Ticket.generateTicketNumber(nextSequence));
+            ticket.setIssuedAt(LocalDateTime.now());
+            ticket.setStatus(Ticket.TicketStatus.EN_ATTENTE);
+
+            try {
+                Ticket savedTicket = ticketRepository.save(ticket);
+                sendTicketNotification(savedTicket);
+                return savedTicket;
+            } catch (DataIntegrityViolationException e) {
+                if (e.getMessage().contains("unique_agency_number")) {
+                    // Log and retry
+                    System.out.println("Retrying ticket generation due to duplicate number...");
+                    continue;
+                } else {
+                    throw new RuntimeException("Failed to create ticket", e);
+                }
+            }
+        }
+
+        throw new RuntimeException("Failed to create ticket after 3 attempts");
     }
+
+
+
+
+    private int getNextSequenceNumber(Long agencyId) {
+        // Try optimistic approach first
+        Optional<Integer> lastSequence = ticketRepository.findMaxSequenceByAgency(agencyId);
+        if (lastSequence.isPresent()) {
+            return lastSequence.get() + 1;
+        }
+
+        // Fallback to pessimistic locking if needed
+        List<Ticket> lastTickets = ticketRepository.findLastTicketForAgency(
+                agencyId,
+                PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "sequenceNumber"))
+        );
+
+        if (!lastTickets.isEmpty()) {
+            return lastTickets.get(0).getSequenceNumber() + 1;
+        }
+
+        return 1; // First ticket for this agency
+    }
+
 
     private void sendCancellationNotification(Ticket ticket) {
         try {
@@ -475,10 +521,18 @@ public class TicketService {
                 .collect(Collectors.toList());
     }
 
-    // 2. Start service (EN_ATTENTE → EN_COURS)
-    public TicketServiceDto startTicketService(Long ticketId, Long agencyId) {
-        Ticket ticket = ticketRepository.findByIdAndAgencyId(ticketId, agencyId)
+    public TicketServiceDto startTicketService(Long ticketId, Long userId) {
+        // First verify the user is from the agency that owns the ticket
+        Agency agency = agencyRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not associated with an agency"));
+
+        Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
+
+        // Verify the ticket belongs to the agency
+        if (!ticket.getAgency().getId().equals(agency.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Ticket does not belong to your agency");
+        }
 
         if (!ticket.getStatus().equals(Ticket.TicketStatus.EN_ATTENTE)) {
             throw new IllegalStateException("Ticket must be in EN_ATTENTE status");
@@ -489,25 +543,31 @@ public class TicketService {
 
         return new TicketServiceDto(
                 ticket.getNumber(),
-                ticket.getAgency().getName(),
+                ticket.getAgencyService().getName(), // Use the service name
                 ticket.getIssuedAt(),
                 ticket.getClient().getUser().getName()
         );
     }
 
     // 3. Cancel pending ticket (EN_ATTENTE → ANNULE)
+    @Transactional
     public TicketCancelDto cancelPendingTicket(Long ticketId, User user) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
 
-        // Verify authorization
-        if (user.getRole().equals(Role.CLIENT)) {  // Added missing parenthesis
-            if (!ticket.getClient().getUser().getId().equals(user.getId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized");
+        // For agency users - verify they own the agency
+        if (user.getRole().equals(Role.AGENCY)) {
+            Agency agency = agencyRepository.findByUser_Id(user.getId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not associated with an agency"));
+
+            if (!ticket.getAgency().getId().equals(agency.getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Ticket doesn't belong to your agency");
             }
-        } else if (user.getRole().equals(Role.AGENCY)) {  // Added missing parenthesis
-            if (!ticket.getAgency().getId().equals(user.getId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized");
+        }
+        // For client users - verify they own the ticket
+        else if (user.getRole().equals(Role.CLIENT)) {
+            if (!ticket.getClient().getUser().getId().equals(user.getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Ticket doesn't belong to you");
             }
         }
 
@@ -523,11 +583,15 @@ public class TicketService {
                 ticket.getNumber()
         );
     }
-
     // 4. Complete service (EN_COURS → TERMINE)
-    public TicketCompleteDto completeTicketService(Long ticketId, Long agencyId) {
-        Ticket ticket = ticketRepository.findByIdAndAgencyId(ticketId, agencyId)
-                .orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
+    public TicketCompleteDto completeTicketService(Long ticketId, Long userId) {
+        // First get the agency for the current user
+        Agency agency = agencyRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not associated with an agency"));
+
+        // Then find the ticket that belongs to this agency
+        Ticket ticket = ticketRepository.findByIdAndAgencyId(ticketId, agency.getId())
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found or doesn't belong to your agency"));
 
         if (!ticket.getStatus().equals(Ticket.TicketStatus.EN_COURS)) {
             throw new IllegalStateException("Ticket must be in EN_COURS status");
@@ -542,11 +606,16 @@ public class TicketService {
                 ticket.getClient().getUser().getName()
         );
     }
-
     // 5. Cancel active ticket (EN_COURS → ANNULE)
-    public TicketCancelDto cancelActiveTicket(Long ticketId, Long agencyId) {
-        Ticket ticket = ticketRepository.findByIdAndAgencyId(ticketId, agencyId)
-                .orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
+    @Transactional
+    public TicketCancelDto cancelActiveTicket(Long ticketId, Long userId) {
+        // First get the agency for the current user
+        Agency agency = agencyRepository.findByUser_Id(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not associated with an agency"));
+
+        // Then find the ticket that belongs to this agency
+        Ticket ticket = ticketRepository.findByIdAndAgencyId(ticketId, agency.getId())
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found or doesn't belong to your agency"));
 
         if (!ticket.getStatus().equals(Ticket.TicketStatus.EN_COURS)) {
             throw new IllegalStateException("Ticket must be in EN_COURS status");
@@ -560,7 +629,6 @@ public class TicketService {
                 ticket.getNumber()
         );
     }
-
     // 6. Get all clients for agency
     public List<ClientDto> getAgencyClients(Long agencyId) {
         // Option 1: Using JPQL query

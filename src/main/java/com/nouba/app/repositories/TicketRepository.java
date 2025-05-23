@@ -2,10 +2,17 @@ package com.nouba.app.repositories;
 
 import com.nouba.app.entities.Client;
 import com.nouba.app.entities.Ticket;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,8 +26,19 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
      * Finds the maximum sequence number for an agency
      * يجد الحد الأقصى للرقم التسلسلي لوكالة
      */
-    @Query("SELECT MAX(CAST(SUBSTRING(t.number, 6) AS int)) FROM Ticket t WHERE t.agency.id = :agencyId")
+
+    // Find max sequence for an agency
+    @Query("SELECT MAX(t.sequenceNumber) FROM Ticket t WHERE t.agency.id = :agencyId")
     Optional<Integer> findMaxSequenceByAgency(@Param("agencyId") Long agencyId);
+
+    @Query("SELECT COUNT(t) > 0 FROM Ticket t WHERE t.agency.id = :agencyId AND t.number = :number")
+    boolean existsByAgencyIdAndNumber(@Param("agencyId") Long agencyId, @Param("number") String number);
+
+
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT t FROM Ticket t WHERE t.agency.id = :agencyId ORDER BY t.sequenceNumber DESC")
+    List<Ticket> findLastTicketForAgency(@Param("agencyId") Long agencyId, Pageable pageable);
 
     /**
      * Counts pending tickets before a specific number
@@ -151,10 +169,10 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
         List<Ticket> findByAgencyId(Long agencyId);
 
         // For endpoints 2, 4, 5
-        Optional<Ticket> findByIdAndAgencyId(Long ticketId, Long agencyId);
+        @Query("SELECT t FROM Ticket t WHERE t.id = :ticketId AND t.agency.id = :agencyId")
+        Optional<Ticket> findByIdAndAgencyId(@Param("ticketId") Long ticketId,
+                                             @Param("agencyId") Long agencyId);
 
-        // For endpoint 6
-        @Query("SELECT DISTINCT t.client FROM Ticket t WHERE t.agency.id = :agencyId")
-        List<Client> findClientsByAgencyId(@Param("agencyId") Long agencyId);
+
     }
 

@@ -50,32 +50,50 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Public endpoints
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/admin/agencies").permitAll()
-                        .requestMatchers("/tickets/**").hasAnyRole("CLIENT")
-
-                        // Agency-specific endpoints
-                        .requestMatchers("/tickets/agency/**").hasRole("AGENCY")
-                        // Ticket status change endpoints
-                        .requestMatchers(HttpMethod.PUT, "/tickets/**/start-service").hasRole("AGENCY")
-                        .requestMatchers(HttpMethod.PUT, "/tickets/**/complete-service").hasRole("AGENCY")
-                        .requestMatchers(HttpMethod.PUT, "/tickets/**/cancel-active").hasRole("AGENCY")
-                        // Cancel pending can be done by agency or client
-                        .requestMatchers(HttpMethod.PUT, "/tickets/**/cancel-pending").hasAnyRole("AGENCY", "CLIENT")
-
-                        .requestMatchers("/users/active-this-week").hasRole("ADMIN")
                         .requestMatchers("/public/tickets/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/tickets/agency/*/services").permitAll()
+
+                        // Admin endpoints
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/tickets/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/tickets/**").hasAnyRole("AGENCY")
-                        .requestMatchers("/users").hasRole("ADMIN")
-                        .requestMatchers("/users/role/**").hasAnyRole("ADMIN", "AGENCY", "CLIENT")
                         .requestMatchers("/users/**").hasRole("ADMIN")
+
+                        // Ticket creation endpoint (keep original URL)
+                        .requestMatchers(HttpMethod.POST, "/tickets/agency/*/*/*").hasRole("CLIENT")
+
+                        // Client endpoints
+                        .requestMatchers(HttpMethod.GET, "/tickets/*/status").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.GET, "/tickets/*/ahead").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.PUT, "/tickets/*/cancel").hasAnyRole("CLIENT", "AGENCY")
+                        .requestMatchers(HttpMethod.PUT, "/tickets/*/cancel-pending").hasAnyRole("CLIENT")//
+                        .requestMatchers(HttpMethod.PUT, "/tickets/*/cancel-pending").hasAnyRole("AGENCY")//
+
+
+                        // Agency endpoints
+                        .requestMatchers("/tickets/agency/**").hasRole("AGENCY")
+                        .requestMatchers(HttpMethod.PUT, "/tickets/agency/*/serve").hasRole("AGENCY")
+                        .requestMatchers(HttpMethod.GET, "/tickets/agency/*/current").hasRole("AGENCY")
+                        .requestMatchers(HttpMethod.GET, "/tickets/agency/*/pending").hasRole("AGENCY")
+                        .requestMatchers(HttpMethod.GET, "/tickets/agency/*/pending/count").hasRole("AGENCY")
+                        .requestMatchers(HttpMethod.GET, "/tickets/agency/*/history").hasAnyRole("AGENCY", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/tickets/agency/*/today/**").hasAnyRole("AGENCY", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/tickets/agency/*/all").hasRole("AGENCY")
+                        .requestMatchers(HttpMethod.GET, "/tickets/agency/*/clients").hasRole("AGENCY")
+
+                        // Ticket processing endpoints
+                        .requestMatchers(HttpMethod.PUT, "/tickets/*/start-service").hasRole("AGENCY")
+                        .requestMatchers(HttpMethod.PUT, "/tickets/*/complete-service").hasRole("AGENCY")
+                        .requestMatchers(HttpMethod.PUT, "/tickets/*/cancel-active").hasRole("AGENCY")
+
+                        // Agency stats
                         .requestMatchers("/agencies/*/stats").hasAnyRole("ADMIN", "AGENCY")
+
+                        // All other requests require authentication
                         .anyRequest().authenticated()
-
-
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
