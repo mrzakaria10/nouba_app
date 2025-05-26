@@ -483,7 +483,7 @@ public class TicketService {
 
     // Add to TicketService.java
     public List<TicketDTO> getAgencyTicketHistory(Long agencyId) {
-        List<Ticket> tickets = ticketRepository.findAllByAgencyId(agencyId);
+        List<Ticket> tickets = ticketRepository.findCompletedAndCancelledByAgencyId(agencyId);
         return tickets.stream()
                 .map(TicketDTO::from)
                 .toList();

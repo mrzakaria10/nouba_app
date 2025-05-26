@@ -173,6 +173,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
         Optional<Ticket> findByIdAndAgencyId(@Param("ticketId") Long ticketId,
                                              @Param("agencyId") Long agencyId);
 
+    @Query("SELECT t FROM Ticket t WHERE t.agency.id = :agencyId AND (t.status = 'ANNULE' OR t.status = 'TERMINE') ORDER BY t.issuedAt DESC")
+    List<Ticket> findCompletedAndCancelledByAgencyId(@Param("agencyId") Long agencyId);
 
     }
 

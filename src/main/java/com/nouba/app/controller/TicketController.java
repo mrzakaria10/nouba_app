@@ -434,7 +434,7 @@ public class TicketController {
      * Returns: client name, ticket number
      */
     @PutMapping("/{ticketId}/cancel-pending")
-    @PreAuthorize("hasAnyRole('AGENCY', 'CLIENT')")
+    @PreAuthorize("hasAnyRole('AGENCY')")
     public ResponseEntity<ApiResponse<TicketCancelDto>> cancelPendingTicket(
             @PathVariable Long ticketId,
             @AuthenticationPrincipal User user) {
@@ -510,5 +510,31 @@ public class TicketController {
         List<ClientDto> clients = ticketService.getAgencyClients(agencyId);
         return ResponseEntity.ok(
                 new ApiResponse<>(clients, "Agency clients retrieved", 200));
+    }
+
+    /**
+     * Get all services for an agency (Role: AGENCY)
+     * Returns: List of services with id, name, description
+     */
+    @GetMapping("/agency/{agencyId}/services-list")
+    @PreAuthorize("hasRole('AGENCY')")
+    public ResponseEntity<ApiResponse<List<ServiceDTO>>> getAgencyServicesList(
+            @PathVariable Long agencyId,
+            @AuthenticationPrincipal User user) {
+
+        // Verify the agency belongs to the authenticated user
+        Agency userAgency = agencyRepository.findByUser_Id(user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not associated with an agency"));
+
+        if (!userAgency.getId().equals(agencyId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized access to this agency's services");
+        }
+
+        List<Servicee> agencyServices = serviceRepository.findByAgenciesId(agencyId);
+        List<ServiceDTO> dtos = agencyServices.stream()
+                .map(s -> new ServiceDTO(s.getId(), s.getName(), s.getDescription()))
+                .toList();
+
+        return ResponseEntity.ok(new ApiResponse<>(dtos, "Services retrieved", 200));
     }
 }

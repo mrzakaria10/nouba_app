@@ -44,15 +44,14 @@ public class PublicTicketService {
                     "Ticket agency mismatch");
         }
 
-
-
         // Calculate position in queue
         int position = ticketRepository.countByAgencyIdAndSequenceLessThanAndPending(
                 agencyId,
-                Integer.parseInt(ticket.getNumber().substring(5)));  // Added missing parenthesis
+                Integer.parseInt(ticket.getNumber().substring(5)));
 
-        // Prepare response
+        // Prepare response with ID
         return TicketPublicDto.builder()
+                .id(ticket.getId()) // Add ticket ID to response
                 .ticketNumber(ticket.getNumber())
                 .clientName(ticket.getClient().getUser().getName())
                 .clientEmail(ticket.getClient().getUser().getEmail())
@@ -64,7 +63,6 @@ public class PublicTicketService {
                 .estimatedWaitTime(calculateWaitTime(position))
                 .build();
     }
-
     private String calculateWaitTime(int position) {
         if (position <= 0) return "0 minutes";
 

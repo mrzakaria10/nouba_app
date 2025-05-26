@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface ServiceRepository extends JpaRepository<Servicee, Long> {
     List<Servicee> findByAgenciesId(Long agencyId);
     Optional<Servicee> findByIdAndAgenciesId(Long id, Long agencyId);
+
 }

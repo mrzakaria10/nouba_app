@@ -12,13 +12,10 @@ import java.util.stream.Collectors;
 public class CityDTO {
     private Long id;
     private String name;
-    private List<AgencyBasicDTO> agencies;
 
     public CityDTO(City city) {
         this.id = city.getId();
         this.name = city.getName();
-        this.agencies = city.getAgencies().stream()
-                .map(AgencyBasicDTO::new)
-                .collect(Collectors.toList());
+
     }
 }

@@ -50,6 +50,9 @@ public class User implements UserDetails {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Client client;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Agency agency;
+
     // ========== UserDetails Implementation ==========
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

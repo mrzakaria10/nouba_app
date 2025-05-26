@@ -62,6 +62,9 @@ public class SecurityConfig {
                         .requestMatchers("/tickets/admin/**").hasRole("ADMIN")
                         .requestMatchers("/users/**").hasRole("ADMIN")
 
+                        // In the authorizeHttpRequests section of SecurityConfig.java
+                        .requestMatchers(HttpMethod.GET, "/tickets/agency/*/services-list").hasRole("AGENCY")
+
                         // Ticket creation endpoint (keep original URL)
                         .requestMatchers(HttpMethod.POST, "/tickets/agency/*/*/*").hasRole("CLIENT")
 
@@ -69,7 +72,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/tickets/*/status").hasRole("CLIENT")
                         .requestMatchers(HttpMethod.GET, "/tickets/*/ahead").hasRole("CLIENT")
                         .requestMatchers(HttpMethod.PUT, "/tickets/*/cancel").hasAnyRole("CLIENT", "AGENCY")
-                        .requestMatchers(HttpMethod.PUT, "/tickets/*/cancel-pending").hasAnyRole("CLIENT")//
+                        //.requestMatchers(HttpMethod.PUT, "/tickets/*/cancel-pending").hasAnyRole("CLIENT")
                         .requestMatchers(HttpMethod.PUT, "/tickets/*/cancel-pending").hasAnyRole("AGENCY")//
 
 
@@ -90,7 +93,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/tickets/*/cancel-active").hasRole("AGENCY")
 
                         // Agency stats
-                        .requestMatchers("/agencies/*/stats").hasAnyRole("ADMIN", "AGENCY")
+                        .requestMatchers("/agencies/**").hasAnyRole("ADMIN", "AGENCY")
 
                         // All other requests require authentication
                         .anyRequest().authenticated()

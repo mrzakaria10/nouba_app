@@ -32,13 +32,13 @@ public class AgencyController {
         return ResponseEntity.ok(agencyService.getAgenciesByCity(cityId));
     }
 
-    @GetMapping("/{id}/stats")
+    /**@GetMapping("/{id}/stats")
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENCY')")
     public ResponseEntity<AgencyStatsDTO> getAgencyStats(
             @PathVariable Long id,
             @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(agencyService.getAgencyStats(id, currentUser));
-    }
+    }*/
 
    /** @GetMapping("/{agencyId}/queue-count")
     public ResponseEntity<Integer> getQueueCount(@PathVariable Long agencyId) {

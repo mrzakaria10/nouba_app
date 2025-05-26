@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 public class TicketPublicDto {
+    private Long id;
     private String ticketNumber;
     private String clientName;
     private String clientEmail;

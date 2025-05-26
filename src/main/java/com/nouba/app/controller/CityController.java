@@ -2,6 +2,7 @@ package com.nouba.app.controller;
 
 import com.nouba.app.dto.AgencyBasicDTO;
 import com.nouba.app.dto.ApiResponse;
+import com.nouba.app.dto.CityDTO;
 import com.nouba.app.entities.Agency;
 import com.nouba.app.entities.City;
 import com.nouba.app.repositories.CityRepository;
@@ -23,10 +24,13 @@ public class CityController {
      * Récupère toutes les villes disponibles
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<City>>> getAllCities() {
+    public ResponseEntity<ApiResponse<List<CityDTO>>> getAllCities() {
         List<City> cities = cityRepository.findAll();
+        List<CityDTO> dtos = cities.stream()
+                .map(CityDTO::new)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(
-                new ApiResponse<>(cities, "Liste des villes récupérée avec succès", 200));
+                new ApiResponse<>(dtos, "Liste des villes récupérée avec succès", 200));
     }
 
     /**

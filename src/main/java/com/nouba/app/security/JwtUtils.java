@@ -1,5 +1,7 @@
 package com.nouba.app.security;
 
+import com.nouba.app.entities.Role;
+import com.nouba.app.entities.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.Claims;
@@ -44,6 +46,17 @@ public class JwtUtils {
         String role = (String) details.get("role");
         Long id = (Long) details.get("id");
 
+        // Add agency ID to the token if user is an agency
+        Long agencyId = null;
+        if (authentication.getPrincipal() instanceof UserDetails) {
+            // You'll need to cast to your custom UserDetails implementation if needed
+            // and fetch the agency ID from the User entity
+            // For example:
+            User user = (User) authentication.getPrincipal();
+            if (user.getRole() == Role.AGENCY && user.getAgency() != null) {
+                agencyId = user.getAgency().getId();
+            }
+        }
 
 
         return Jwts.builder()
@@ -53,6 +66,8 @@ public class JwtUtils {
                 .claim("email", email) // Add email to the token
                 .claim("role", role)
                 .claim("id", id)
+                .claim("agencyId", agencyId) // Add agency ID to the token
+
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(secretKey)
@@ -97,5 +112,8 @@ public class JwtUtils {
     }
     public Long extractId(String token) {
         return extractClaims(token).get("id", Long.class);
+    }
+    public Long extractAgencyId(String token) {
+        return extractClaims(token).get("agencyId", Long.class);
     }
 }
