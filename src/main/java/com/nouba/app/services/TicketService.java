@@ -11,6 +11,7 @@ import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -39,6 +40,7 @@ public class TicketService {
     private final EmailService emailService;
     private final ServiceRepository serviceRepository;
     private final ClientRepository clientRepository;
+
 
 
 
@@ -665,5 +667,122 @@ public class TicketService {
         int minutes = position * 5; // 5 minutes per person
         return minutes < 60 ? minutes + " minutes" :
                 (minutes / 60) + " hours " + (minutes % 60) + " minutes";
+    }
+
+    // new api zakaria
+
+    /**
+     * Get next available ticket number for an agency
+     */
+    public String getNextTicketNumber(Long agencyId) {
+        Integer lastSequence = ticketRepository.findMaxSequenceByAgency(agencyId).orElse(0);
+        int nextSequence = lastSequence + 1;
+        return String.format("NOUBA%03d", nextSequence);
+    }
+
+    /**
+     * Generate ticket with specific number (if available)
+     */
+    @Transactional
+    public Ticket generateTicketWithNumber(Long agencyId, Long serviceId, Long clientId, Client client, String ticketNumber) {
+        Agency agency = agencyRepository.findById(agencyId)
+                .orElseThrow(() -> new RuntimeException("Agency not found"));
+
+        Servicee service = serviceRepository.findByIdAndAgenciesId(serviceId, agencyId)
+                .orElseThrow(() -> new RuntimeException("Service not available for this agency"));
+
+        if (!client.getId().equals(clientId)) {
+            throw new RuntimeException("Client ID mismatch");
+        }
+
+        // Validate ticket number format
+        if (!ticketNumber.matches("^NOUBA\\d{3}$")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid ticket number format");
+        }
+
+        // Extract sequence number from ticket number
+        int sequenceNumber;
+        try {
+            sequenceNumber = Integer.parseInt(ticketNumber.substring(5));
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid ticket number format");
+        }
+
+        // Check if number is already taken
+        if (ticketRepository.existsByAgencyIdAndNumber(agencyId, ticketNumber)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This ticket number is already taken");
+        }
+
+        // Check if number is the next available
+        Integer lastSequence = ticketRepository.findMaxSequenceByAgency(agencyId).orElse(0);
+        if (sequenceNumber <= lastSequence) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Please choose a number after " + String.format("NOUBA%03d", lastSequence));
+        }
+
+        Ticket ticket = new Ticket();
+        ticket.setAgency(agency);
+        ticket.setAgencyService(service);
+        ticket.setClient(client);
+        ticket.setSequenceNumber(sequenceNumber);
+        ticket.setNumber(ticketNumber);
+        ticket.setIssuedAt(LocalDateTime.now());
+        ticket.setStatus(Ticket.TicketStatus.EN_ATTENTE);
+
+        try {
+            Ticket savedTicket = ticketRepository.save(ticket);
+            sendTicketNotification(savedTicket);
+            return savedTicket;
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This ticket number is already taken");
+        }
+    }
+
+    // In TicketService.java
+    /**
+     * Get last ticket in EN_ATTENTE status for an agency
+     * Obtenir le dernier ticket en statut EN_ATTENTE pour une agence
+     * الحصول على آخر تذكرة في حالة انتظار لوكالة
+     */
+    public Optional<Ticket> getLastPendingTicket(Long agencyId, Long userId) {
+        return ticketRepository.findLastPendingTicketForClient(agencyId, userId);
+    }
+
+    // new first ticket en attende
+
+    /**
+     * Get and start processing the first pending ticket for an agency
+     */
+    @Transactional
+    public TicketProcessingDto startFirstPendingTicket(Long agencyId, Long userId) {
+        // Verify user is from the agency
+        Agency agency = agencyRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not associated with an agency"));
+
+        if (!agency.getId().equals(agencyId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized for this agency");
+        }
+
+        // Get the first pending ticket
+        Ticket ticket = ticketRepository.findFirstPendingTicketByAgency(agencyId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No pending tickets found"));
+
+        // Verify ticket is still in EN_ATTENTE status
+        if (!ticket.getStatus().equals(Ticket.TicketStatus.EN_ATTENTE)) {
+            throw new IllegalStateException("Ticket is no longer in EN_ATTENTE status");
+        }
+
+        // Update status to EN_COURS
+        ticket.startProcessing();
+        ticket = ticketRepository.save(ticket);
+
+        return new TicketProcessingDto(
+                ticket.getId(),          // Add ticket ID
+                ticket.getNumber(),
+                ticket.getAgencyService().getName(),
+                ticket.getIssuedAt(),
+                ticket.getClient().getUser().getName(),
+                ticket.getStatus().toString()
+        );
     }
 }

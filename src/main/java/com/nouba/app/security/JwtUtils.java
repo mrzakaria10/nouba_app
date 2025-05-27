@@ -46,8 +46,9 @@ public class JwtUtils {
         String role = (String) details.get("role");
         Long id = (Long) details.get("id");
 
-        // Add agency ID to the token if user is an agency
         Long agencyId = null;
+        Long clientId = null;
+
         if (authentication.getPrincipal() instanceof UserDetails) {
             // You'll need to cast to your custom UserDetails implementation if needed
             // and fetch the agency ID from the User entity
@@ -56,6 +57,10 @@ public class JwtUtils {
             if (user.getRole() == Role.AGENCY && user.getAgency() != null) {
                 agencyId = user.getAgency().getId();
             }
+            if (user.getRole() == Role.CLIENT && user.getClient() != null) {
+                clientId = user.getClient().getId();
+            }
+
         }
 
 
@@ -67,6 +72,8 @@ public class JwtUtils {
                 .claim("role", role)
                 .claim("id", id)
                 .claim("agencyId", agencyId) // Add agency ID to the token
+                .claim("clientId", clientId) // Add client ID to the token
+
 
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
@@ -112,6 +119,9 @@ public class JwtUtils {
     }
     public Long extractId(String token) {
         return extractClaims(token).get("id", Long.class);
+    }
+    public Long extractClientId(String token) {
+        return extractClaims(token).get("clientId", Long.class);
     }
     public Long extractAgencyId(String token) {
         return extractClaims(token).get("agencyId", Long.class);

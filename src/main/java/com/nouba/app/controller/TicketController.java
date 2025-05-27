@@ -5,6 +5,7 @@ import com.nouba.app.entities.*;
 import com.nouba.app.repositories.AgencyRepository;
 import com.nouba.app.repositories.ClientRepository;
 import com.nouba.app.repositories.ServiceRepository;
+import com.nouba.app.repositories.TicketRepository;
 import com.nouba.app.services.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -29,6 +30,7 @@ public class TicketController {
     private final ClientRepository clientRepository;
     private final ServiceRepository serviceRepository;
     private final AgencyRepository agencyRepository;
+    private final TicketRepository ticketRepository;
 
     /**
      * Create a new ticket for an agency with service selection
@@ -537,4 +539,121 @@ public class TicketController {
 
         return ResponseEntity.ok(new ApiResponse<>(dtos, "Services retrieved", 200));
     }
+
+    //new api zakaria ticket
+
+    /**
+     * Get next available ticket number for an agency
+     */
+    @GetMapping("/agency/{agencyId}/next-number")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<ApiResponse<String>> getNextTicketNumber(
+            @PathVariable Long agencyId) {
+        try {
+            String nextNumber = ticketService.getNextTicketNumber(agencyId);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(nextNumber, "Next ticket number retrieved", 200));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(null, "Error getting next ticket number: " + e.getMessage(), 500));
+        }
+    }
+
+    /**
+     * Create ticket with specific number (if available)
+     */
+    @PostMapping("/agency/{agencyId}/{clientId}/{serviceId}/{ticketNumber}")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<ApiResponse<TicketDTO>> takeTicketWithNumber(
+            @PathVariable Long agencyId,
+            @PathVariable Long clientId,
+            @PathVariable Long serviceId,
+            @PathVariable String ticketNumber,
+            @AuthenticationPrincipal User user) {
+        try {
+            if (user == null || user.getClient() == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse<>(null, "Authentication required", 401));
+            }
+
+            if (!clientId.equals(user.getClient().getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse<>(null, "Client ID doesn't match authenticated user", 403));
+            }
+
+            // Validate ticket number format
+            if (!ticketNumber.matches("^NOUBA\\d{3}$")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(null, "Invalid ticket number format. Must be like 'nouba001'", 400));
+            }
+
+            Ticket ticket = ticketService.generateTicketWithNumber(agencyId, serviceId, clientId, user.getClient(), ticketNumber);
+
+            return ResponseEntity.ok(
+                    new ApiResponse<>(TicketDTO.from(ticket), "Ticket created successfully", 200));
+
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(new ApiResponse<>(null, e.getReason(), e.getStatusCode().value()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(null, "Error creating ticket: " + e.getMessage(), 500));
+        }
+    }
+
+
+
+    // NEW API
+
+    /**
+     * Get last ticket in EN_ATTENTE status for an agency
+     * Obtenir le dernier ticket en statut EN_ATTENTE pour une agence
+     * الحصول على آخر تذكرة في حالة انتظار لوكالة
+     */
+    @GetMapping("/agency/{agencyId}/last-pending")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<ApiResponse<TicketDTO>> getLastPendingTicket(
+            @PathVariable Long agencyId,
+            @AuthenticationPrincipal User user) {
+
+        try {
+            Optional<Ticket> lastPendingTicket = ticketService.getLastPendingTicket(agencyId, user.getId());
+
+            return lastPendingTicket.map(ticket ->
+                            ResponseEntity.ok(
+                                    new ApiResponse<>(TicketDTO.from(ticket),
+                                            "Last pending ticket retrieved",
+                                            200)))
+                    .orElseGet(() -> ResponseEntity.ok(
+                            new ApiResponse<>(null,
+                                    "No pending tickets found",
+                                    200)));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(null, "Error retrieving ticket: " + e.getMessage(), 500));
+        }
+    }
+
+    // start first panding
+
+    @PutMapping("/agency/{agencyId}/start-first-pending")
+    @PreAuthorize("hasRole('AGENCY')")
+    public ResponseEntity<ApiResponse<TicketProcessingDto>> startFirstPendingTicket(
+            @PathVariable Long agencyId,
+            @AuthenticationPrincipal User user) {
+
+        try {
+            TicketProcessingDto response = ticketService.startFirstPendingTicket(agencyId, user.getId());
+            return ResponseEntity.ok(
+                    new ApiResponse<>(response, "First pending ticket started successfully", 200));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(new ApiResponse<>(null, e.getReason(), e.getStatusCode().value()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(null, "Error starting ticket: " + e.getMessage(), 500));
+        }
+    }
+
+
 }

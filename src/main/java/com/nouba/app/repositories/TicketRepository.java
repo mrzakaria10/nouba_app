@@ -176,5 +176,27 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     @Query("SELECT t FROM Ticket t WHERE t.agency.id = :agencyId AND (t.status = 'ANNULE' OR t.status = 'TERMINE') ORDER BY t.issuedAt DESC")
     List<Ticket> findCompletedAndCancelledByAgencyId(@Param("agencyId") Long agencyId);
 
-    }
+    /**
+     * Find first ticket by agency ID and status, ordered by issuedAt descending
+     * Trouver la première ticket par ID d'agence et statut, trié par date d'émission décroissante
+     * العثور على أول تذكرة حسب معرف الوكالة والحالة، مرتبة حسب وقت الإصدار تنازلياً
+     */
+    @Query("SELECT t FROM Ticket t WHERE t.agency.id = :agencyId AND t.status = :status ORDER BY t.issuedAt DESC")
+    Optional<Ticket> findFirstByAgencyIdAndStatusOrderByIssuedAtDesc(
+            @Param("agencyId") Long agencyId,
+            @Param("status") Ticket.TicketStatus status);
+
+    // Add this method to TicketRepository.java
+    @Query("SELECT COUNT(t) > 0 FROM Ticket t WHERE t.agency.id = :agencyId AND t.client.user.id = :userId")
+    boolean existsByAgencyIdAndClientUserId(@Param("agencyId") Long agencyId, @Param("userId") Long userId);
+
+    @Query("SELECT t FROM Ticket t WHERE t.agency.id = :agencyId AND t.status = 'EN_ATTENTE' AND t.client.user.id = :userId ORDER BY t.issuedAt DESC LIMIT 1")
+    Optional<Ticket> findLastPendingTicketForClient(
+            @Param("agencyId") Long agencyId,
+            @Param("userId") Long userId);
+
+    @Query("SELECT t FROM Ticket t WHERE t.agency.id = :agencyId AND t.status = 'EN_ATTENTE' ORDER BY t.issuedAt ASC LIMIT 1")
+    Optional<Ticket> findFirstPendingTicketByAgency(@Param("agencyId") Long agencyId);
+
+}
 

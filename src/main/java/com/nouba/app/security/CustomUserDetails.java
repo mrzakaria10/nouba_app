@@ -51,4 +51,14 @@ public class CustomUserDetails implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+    // Add method to get client ID
+    public Long getClientId() {
+        return (user.getClient() != null) ? user.getClient().getId() : null;
+    }
+
+    // Add method to get the User entity
+    public User getUser() {
+        return user;
+    }
 }
