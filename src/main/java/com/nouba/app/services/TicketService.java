@@ -514,7 +514,7 @@ public class TicketService {
         return ticketRepository.findByAgencyId(agencyId).stream()
                 .map(ticket -> new TicketAgencyDto(
                         ticket.getNumber(),
-                        ticket.getAgency().getName(),
+                        ticket.getAgencyService().getName(),
                         ticket.getIssuedAt(),
                         calculatePosition(ticket),
                         calculateWaitTime(ticket),

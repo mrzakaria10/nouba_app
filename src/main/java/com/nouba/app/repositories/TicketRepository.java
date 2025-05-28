@@ -198,5 +198,13 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     @Query("SELECT t FROM Ticket t WHERE t.agency.id = :agencyId AND t.status = 'EN_ATTENTE' ORDER BY t.issuedAt ASC LIMIT 1")
     Optional<Ticket> findFirstPendingTicketByAgency(@Param("agencyId") Long agencyId);
 
+    @Modifying
+    @Query("DELETE FROM Ticket t WHERE t.agency.id = :agencyId")
+    void deleteAllByAgencyId(@Param("agencyId") Long agencyId);
+
+    @Modifying
+    @Query("DELETE FROM Ticket t WHERE t.client.id = :clientId")
+    void deleteAllByClientId(@Param("clientId") Long clientId);
+
 }
 

@@ -2,6 +2,7 @@ package com.nouba.app.controller;
 
 import com.nouba.app.dto.ActiveClientDTO;
 import com.nouba.app.dto.ApiResponse;
+import com.nouba.app.dto.UserBasicInfoDTO;
 import com.nouba.app.entities.Role;
 import com.nouba.app.services.UserService;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<?>> getAllUsers() {
+    public ResponseEntity<ApiResponse<List<UserBasicInfoDTO>>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
