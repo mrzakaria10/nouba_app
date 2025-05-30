@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.nouba.app.repositories.AgencyRepository;
 
 import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -83,10 +84,7 @@ public class UserService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startOfWeek = now.with(DayOfWeek.MONDAY).truncatedTo(ChronoUnit.DAYS);
 
-        List<User> activeUsers = userRepository.findActiveUsersThisWeek(
-                startOfWeek,
-                now
-        );
+        List<User> activeUsers = userRepository.findActiveUsersThisWeek(startOfWeek, now);
 
         List<ActiveClientDTO> result = activeUsers.stream()
                 .map(this::convertToActiveClientDTO)
@@ -101,8 +99,7 @@ public class UserService {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole().name())
-                .timeAgo(calculateTimeAgo(user.getLastLogin()));
-
+                .timeAgo(formatTimeAgo(user.getActivatedAt()));  // Changed to use activatedAt
 
         // Add photo URL only for agencies
         if (user.getRole() == Role.AGENCY) {
@@ -116,16 +113,27 @@ public class UserService {
         return builder.build();
     }
 
-    private String calculateTimeAgo(LocalDateTime lastLogin) {
-        long minutes = ChronoUnit.MINUTES.between(lastLogin, LocalDateTime.now());
+    private String formatTimeAgo(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return "N/A";
+        }
+
+        Duration duration = Duration.between(dateTime, LocalDateTime.now());
+        long seconds = duration.getSeconds();
+
+        if (seconds < 60) {
+            return seconds + " seconds ago";
+        }
+        long minutes = seconds / 60;
         if (minutes < 60) {
             return minutes + " minutes ago";
         }
-        long hours = ChronoUnit.HOURS.between(lastLogin, LocalDateTime.now());
+        long hours = minutes / 60;
         if (hours < 24) {
             return hours + " hours ago";
         }
-        long days = ChronoUnit.DAYS.between(lastLogin, LocalDateTime.now());
+        long days = hours / 24;
         return days + " days ago";
     }
+
 }

@@ -25,6 +25,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "activated_at")
+    private LocalDateTime activatedAt;
+
     @Column(unique = true, nullable = false)
     private String email;
 
@@ -88,6 +91,8 @@ public class User implements UserDetails {
     public void activateAccount() {
         this.enabled = true;
         this.activationToken = null;
+        this.activatedAt = LocalDateTime.now(); // Add this line
+
     }
 
     public void generateActivationToken(String token) {

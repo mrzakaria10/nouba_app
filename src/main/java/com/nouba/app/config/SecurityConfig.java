@@ -105,7 +105,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/tickets/*/cancel-active").hasRole("AGENCY")
 
                         // Agency stats
-                        .requestMatchers("/agencies/**").hasAnyRole("ADMIN", "AGENCY", "CLIENT")
+                        .requestMatchers("/agencies/**").permitAll()
 
 
 

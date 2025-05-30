@@ -18,13 +18,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByLastLoginBetween(LocalDateTime start, LocalDateTime end);
     List<User> findByRole(Role role);
 
-    @Query("SELECT DISTINCT u FROM User u " +
-            "LEFT JOIN FETCH u.client " +
-            "WHERE u.enabled = true " +
-            "AND u.lastLogin BETWEEN :startOfWeek AND :endOfWeek " +
-            "AND (u.role = 'CLIENT' OR u.role = 'AGENCY') " +
-            "ORDER BY u.lastLogin DESC")
+    @Query("SELECT u FROM User u WHERE u.enabled = true AND u.activatedAt BETWEEN :startDate AND :endDate")
     List<User> findActiveUsersThisWeek(
-            @Param("startOfWeek") LocalDateTime startOfWeek,
-            @Param("endOfWeek") LocalDateTime endOfWeek);
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }

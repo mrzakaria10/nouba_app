@@ -70,6 +70,8 @@ public class Ticket {
 
 
 
+
+
     /**
      * Generate a formatted ticket number combining agency ID and sequence
      * Format: NOUBA + agencyId (3 digits) + sequence (3 digits)

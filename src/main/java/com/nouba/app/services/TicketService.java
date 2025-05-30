@@ -785,4 +785,49 @@ public class TicketService {
                 ticket.getStatus().toString()
         );
     }
+
+    /**
+     * Send ticket creation confirmation with all details
+     */
+    private void sendTicketCreationConfirmation(Ticket ticket) {
+        try {
+            Map<String, String> values = new HashMap<>();
+            values.put("clientName", ticket.getClient().getUser().getName());
+            values.put("ticketNumber", ticket.getNumber());
+            values.put("agencyName", ticket.getAgency().getName());
+            values.put("serviceName", ticket.getAgencyService() != null ?
+                    ticket.getAgencyService().getName() : "N/A");
+            values.put("peopleAhead", String.valueOf(getPeopleAhead(ticket.getId())));
+            values.put("estimatedWait", String.valueOf(calculateWaitTime(ticket.getAgency().getId())));
+            values.put("status", ticket.getStatus().name());
+            values.put("currentPosition", String.valueOf(getPeopleAhead(ticket.getId()) + 1));
+
+            // Send the detailed creation confirmation email
+            String creationContent = emailService.loadEmailTemplate(
+                    "templates.emails/ticket-creation-confirmation.html",
+                    values
+            );
+
+            emailService.sendEmail(
+                    ticket.getClient().getUser().getEmail(),
+                    "Confirmation de création de ticket - " + ticket.getNumber(),
+                    creationContent
+            );
+
+            // Also send the regular notification (optional)
+            String notificationContent = emailService.loadEmailTemplate(
+                    "templates.emails/ticket-notification.html",
+                    values
+            );
+
+            emailService.sendEmail(
+                    ticket.getClient().getUser().getEmail(),
+                    "Votre ticket pour " + ticket.getAgency().getName(),
+                    notificationContent
+            );
+
+        } catch (Exception e) {
+            logger.error("Error sending ticket creation confirmation", e);
+        }
+    }
 }
