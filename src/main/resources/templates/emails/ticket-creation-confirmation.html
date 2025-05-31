@@ -3,50 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <title>Confirmation de création de ticket</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
+            background: #f4f8fb;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
             color: #333;
         }
         .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            max-width: 420px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(30, 64, 175, 0.08);
+            padding: 32px 24px;
         }
         .header {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px;
+            background: linear-gradient(90deg, #2563eb 0%, #4f46e5 100%);
+            color: #fff;
+            padding: 18px 0 10px 0;
             text-align: center;
-            border-radius: 5px 5px 0 0;
+            border-radius: 16px 16px 0 0;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 18px;
+        }
+        p {
+            color: #374151;
+            font-size: 1.05rem;
+            margin-bottom: 18px;
+            text-align: center;
         }
         .ticket-info {
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #f9f9f9;
-            border-radius: 5px;
+            margin: 18px 0 24px 0;
+            padding: 18px 14px;
+            background: #f1f5f9;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(37,99,235,0.04);
         }
         .info-item {
             margin-bottom: 10px;
+            font-size: 1.02rem;
+            display: flex;
+            justify-content: space-between;
         }
         .info-label {
-            font-weight: bold;
+            font-weight: 600;
+            color: #2563eb;
         }
         .footer {
-            margin-top: 20px;
-            font-size: 0.9em;
-            color: #777;
+            margin-top: 24px;
+            font-size: 0.98em;
+            color: #6b7280;
             text-align: center;
+        }
+        @media (max-width: 500px) {
+            .container {
+                padding: 16px 4px;
+            }
+            .header {
+                font-size: 1.1rem;
+                padding: 12px 0 8px 0;
+            }
+            .ticket-info {
+                padding: 12px 4px;
+            }
+            .info-item {
+                font-size: 0.98rem;
+                flex-direction: column;
+                gap: 2px;
+            }
         }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h2>Confirmation de création de ticket</h2>
+        Confirmation de création de ticket
     </div>
 
     <p>Bonjour ${clientName},</p>
@@ -54,25 +90,22 @@
 
     <div class="ticket-info">
         <div class="info-item">
-            <span class="info-label">Numéro de ticket:</span> ${ticketNumber}
+            <span class="info-label">Numéro de ticket: </span> <span>${ticketNumber}</span>
         </div>
         <div class="info-item">
-            <span class="info-label">Agence:</span> ${agencyName}
+            <span class="info-label">Agence: </span> <span>${agencyName}</span>
         </div>
         <div class="info-item">
-            <span class="info-label">Service:</span> ${serviceName}
+            <span class="info-label">Service: </span> <span>${serviceName}</span>
         </div>
         <div class="info-item">
-            <span class="info-label">Date de création:</span> ${issuedAt}
+            <span class="info-label">Statut: </span> <span>${status}</span>
         </div>
         <div class="info-item">
-            <span class="info-label">Statut:</span> ${status}
+            <span class="info-label">Personnes devant vous: </span> <span>${peopleAhead}</span>
         </div>
         <div class="info-item">
-            <span class="info-label">Personnes devant vous:</span> ${peopleAhead}
-        </div>
-        <div class="info-item">
-            <span class="info-label">Temps d'attente estimé:</span> ${estimatedWait} minutes
+            <span class="info-label">Temps d'attente estimé: </span> <span>${estimatedWait} minutes</span>
         </div>
     </div>
 

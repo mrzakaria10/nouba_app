@@ -1,14 +1,75 @@
 ﻿<!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <title>Votre ticket a été créé</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            background: #f4f8fb;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 420px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(30, 64, 175, 0.08);
+            padding: 32px 24px;
+        }
+        h1 {
+            color: #2563eb;
+            font-size: 1.5rem;
+            margin-bottom: 18px;
+            text-align: center;
+            font-weight: 700;
+        }
+        p {
+            color: #374151;
+            font-size: 1.05rem;
+            margin-bottom: 18px;
+            text-align: center;
+        }
+        .highlight {
+            color: #2563eb;
+            font-weight: 700;
+        }
+        .cta {
+            background: #e0f2fe;
+            color: #0369a1;
+            border-radius: 8px;
+            padding: 14px 0;
+            margin-top: 18px;
+            font-size: 1.08rem;
+            text-align: center;
+            font-weight: 600;
+        }
+        @media (max-width: 500px) {
+            .container {
+                padding: 16px 4px;
+            }
+            h1 {
+                font-size: 1.1rem;
+            }
+            p, .cta {
+                font-size: 0.98rem;
+            }
+        }
+    </style>
 </head>
 <body>
-<p>Bonjour ${clientName},</p>
-<p>Votre ticket pour l'agence ${agencyName} a été créé avec le numéro <strong>${ticketNumber}</strong>.</p>
-<p>Il y a actuellement <strong>${peopleAhead}</strong> personnes devant vous.</p>
-<p>Temps d'attente estimé: <strong>${estimatedWait}</strong> minutes.</p>
-<p>Merci de votre patience.</p>
+<div class="container">
+    <h1>Votre ticket a été créé</h1>
+    <p>Bonjour <span class="highlight">${clientName}</span>,</p>
+    <p>Votre ticket pour l'agence <span class="highlight">${agencyName}</span> a été créé avec le numéro <span class="highlight">${ticketNumber}</span>.</p>
+    <div class="cta">
+        Il y a actuellement <span class="highlight">${peopleAhead}</span> personnes devant vous.<br>
+        Temps d'attente estimé : <span class="highlight">${estimatedWait}</span> minutes.
+    </div>
+    <p style="margin-top:24px;">Merci de votre patience.</p>
+</div>
 </body>
 </html>

@@ -1,43 +1,97 @@
 ﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
-    <!-- Meta tags for proper rendering -->
     <meta charset="UTF-8">
     <title>Bienvenue chez Nouba</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        /* Basic styling for email */
-        body { font-family: Arial, sans-serif; line-height: 1.6; }
-        ul { padding-left: 20px; }
+        body {
+            background: #f4f8fb;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 420px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(30, 64, 175, 0.08);
+            padding: 32px 24px;
+        }
+        h1 {
+            color: #2563eb;
+            font-size: 1.7rem;
+            margin-bottom: 18px;
+            text-align: center;
+            font-weight: 700;
+        }
+        h3 {
+            color: #2563eb;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            font-size: 1.15rem;
+        }
+        p {
+            color: #374151;
+            font-size: 1.05rem;
+            margin-bottom: 18px;
+            text-align: center;
+        }
+        ul, ol {
+            margin: 0 0 18px 0;
+            padding-left: 22px;
+            color: #374151;
+            font-size: 1.02rem;
+        }
+        li {
+            margin-bottom: 7px;
+        }
+        .footer {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.98rem;
+            margin-top: 24px;
+        }
+        @media (max-width: 500px) {
+            .container {
+                padding: 16px 4px;
+            }
+            h1 {
+                font-size: 1.2rem;
+            }
+            h3 {
+                font-size: 1rem;
+            }
+            ul, ol, p {
+                font-size: 0.98rem;
+            }
+        }
     </style>
 </head>
 <body>
-<!-- Personalized greeting -->
-<p>Bonjour ${name},</p>
-
-<!-- Main message -->
-<p>Votre compte client a été créé avec succès sur notre plateforme Nouba.</p>
-
-<!-- Account details section -->
-<h3>Vos informations de compte :</h3>
-<ul>
-    <li><strong>Nom :</strong> ${name}</li>
-    <li><strong>Email :</strong> ${email}</li>
-    <li><strong>Mot de passe :</strong> ${password}</li>
-    <li><strong>Téléphone :</strong> ${phone}</li>
-    <li><strong>Adresse :</strong> ${address}</li>
-</ul>
-
-<!-- Security recommendations -->
-<p>Pour des raisons de sécurité, nous vous recommandons de :</p>
-<ol>
-    <li>Changer votre mot de passe après votre première connexion</li>
-    <li>Ne jamais partager vos identifiants</li>
-</ol>
-
-<!-- Activation reminder -->
-<p>Pour activer votre compte, veuillez cliquer sur le lien d'activation envoyé séparément.</p>
-
-<!-- Closing -->
-<p>Cordialement,<br>L'équipe Nouba</p>
+<div class="container">
+    <h1>Bienvenue chez Nouba</h1>
+    <p>Bonjour ${name},</p>
+    <p>Votre compte client a été créé avec succès sur notre plateforme Nouba.</p>
+    <h3>Vos informations de compte :</h3>
+    <ul>
+        <li><strong>Nom :</strong> ${name}</li>
+        <li><strong>Email :</strong> ${email}</li>
+        <li><strong>Mot de passe :</strong> ${password}</li>
+        <li><strong>Téléphone :</strong> ${phone}</li>
+        <li><strong>Adresse :</strong> ${address}</li>
+    </ul>
+    <p>Pour des raisons de sécurité, nous vous recommandons de :</p>
+    <ol>
+        <li>Changer votre mot de passe après votre première connexion</li>
+        <li>Ne jamais partager vos identifiants</li>
+    </ol>
+    <p>Pour activer votre compte, veuillez cliquer sur le lien d'activation envoyé séparément.</p>
+    <div class="footer">
+        Cordialement,<br>L'équipe Nouba
+    </div>
+</div>
 </body>
 </html>

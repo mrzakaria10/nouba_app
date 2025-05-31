@@ -80,7 +80,8 @@ public class TicketService {
 
             try {
                 Ticket savedTicket = ticketRepository.save(ticket);
-                sendTicketNotification(savedTicket);
+                sendTicketCreationConfirmation(savedTicket); // Send detailed confirmation
+                sendTicketNotification(savedTicket); // Send regular notification
                 return savedTicket;
             } catch (DataIntegrityViolationException e) {
                 if (e.getMessage().contains("unique_agency_number")) {
@@ -731,7 +732,8 @@ public class TicketService {
 
         try {
             Ticket savedTicket = ticketRepository.save(ticket);
-            sendTicketNotification(savedTicket);
+            sendTicketCreationConfirmation(savedTicket); // Send detailed confirmation
+            sendTicketNotification(savedTicket); // Send regular notification
             return savedTicket;
         } catch (DataIntegrityViolationException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This ticket number is already taken");
@@ -804,7 +806,7 @@ public class TicketService {
 
             // Send the detailed creation confirmation email
             String creationContent = emailService.loadEmailTemplate(
-                    "templates.emails/ticket-creation-confirmation.html",
+                    "templates/emails/ticket-creation-confirmation.html",
                     values
             );
 
@@ -815,8 +817,8 @@ public class TicketService {
             );
 
             // Also send the regular notification (optional)
-            String notificationContent = emailService.loadEmailTemplate(
-                    "templates.emails/ticket-notification.html",
+           /** String notificationContent = emailService.loadEmailTemplate(
+                    "templates.emails.ticket-notification.html",
                     values
             );
 
@@ -824,7 +826,7 @@ public class TicketService {
                     ticket.getClient().getUser().getEmail(),
                     "Votre ticket pour " + ticket.getAgency().getName(),
                     notificationContent
-            );
+            );*/
 
         } catch (Exception e) {
             logger.error("Error sending ticket creation confirmation", e);

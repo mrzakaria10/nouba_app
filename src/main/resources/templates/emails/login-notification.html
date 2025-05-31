@@ -1,28 +1,77 @@
 ﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <!-- Meta tags for proper rendering -->
   <meta charset="UTF-8">
   <title>Connexion réussie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    /* Basic styling for email */
-    body { font-family: Arial, sans-serif; line-height: 1.6; }
+    body {
+      background: #f4f8fb;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 420px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 4px 24px rgba(30, 64, 175, 0.08);
+      padding: 32px 24px;
+    }
+    h1 {
+      color: #2563eb;
+      font-size: 1.7rem;
+      margin-bottom: 18px;
+      text-align: center;
+      font-weight: 700;
+    }
+    p {
+      color: #374151;
+      font-size: 1.05rem;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+    .notice {
+      background: #fef3c7;
+      color: #b45309;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin: 18px 0;
+      font-size: 1rem;
+      text-align: center;
+    }
+    .footer {
+      text-align: center;
+      color: #6b7280;
+      font-size: 0.95rem;
+      margin-top: 24px;
+    }
+    @media (max-width: 500px) {
+      .container {
+        padding: 18px 6px;
+      }
+      h1 {
+        font-size: 1.2rem;
+      }
+      p, .notice {
+        font-size: 0.98rem;
+      }
+    }
   </style>
 </head>
 <body>
-<!-- Personalized greeting -->
-<p>Bonjour ${name},</p>
-
-<!-- Login confirmation with timestamp -->
-<p>Vous vous êtes connecté avec succès à votre compte Nouba le ${loginTime}.</p>
-
-<!-- Welcome message -->
-<p>Bienvenue sur notre plateforme !</p>
-
-<!-- Security notice -->
-<p>Si vous n'êtes pas à l'origine de cette connexion, veuillez contacter immédiatement notre support.</p>
-
-<!-- Closing -->
-<p>Cordialement,<br>L'équipe Nouba</p>
+<div class="container">
+  <h1>Connexion réussie</h1>
+  <p>Bonjour ${name},</p>
+  <p>Vous vous êtes connecté avec succès à votre compte Nouba le <b>${loginTime}</b>.</p>
+  <p>Bienvenue sur notre plateforme !</p>
+  <div class="notice">
+    Si vous n'êtes pas à l'origine de cette connexion, veuillez contacter immédiatement notre support.
+  </div>
+  <div class="footer">
+    Cordialement,<br>L'équipe Nouba
+  </div>
+</div>
 </body>
 </html>
