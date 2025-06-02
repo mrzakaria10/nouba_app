@@ -109,6 +109,7 @@ public class SecurityConfig {
 
 
 
+
                         // All other requests require authentication
                         .anyRequest().authenticated()
                 )
